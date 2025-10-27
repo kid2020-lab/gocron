@@ -119,7 +119,7 @@ type CreateSlackChannelForm struct {
 
 func UpdateMail(c *gin.Context) {
 	var form MailServerForm
-	if err := c.ShouldBindJSON(&form); err != nil {
+	if err := c.ShouldBind(&form); err != nil {
 		json := utils.JsonResponse{}
 		result := json.CommonFailure("表单验证失败, 请检测输入")
 		c.String(http.StatusOK, result)

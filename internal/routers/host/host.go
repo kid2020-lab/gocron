@@ -72,11 +72,11 @@ func Detail(c *gin.Context) {
 }
 
 type HostForm struct {
-	Id     int16
-	Name   string `binding:"required,max=64"`
-	Alias  string `binding:"required,max=32"`
-	Port   int    `binding:"required,min=1,max=65535"`
-	Remark string
+	Id     int16  `form:"id" json:"id"`
+	Name   string `form:"name" json:"name" binding:"required,max=64"`
+	Alias  string `form:"alias" json:"alias" binding:"required,max=32"`
+	Port   int    `form:"port" json:"port" binding:"required,min=1,max=65535"`
+	Remark string `form:"remark" json:"remark"`
 }
 
 
@@ -84,7 +84,7 @@ type HostForm struct {
 // Store 保存、修改主机信息
 func Store(c *gin.Context) {
 	var form HostForm
-	if err := c.ShouldBindJSON(&form); err != nil {
+	if err := c.ShouldBind(&form); err != nil {
 		json := utils.JsonResponse{}
 		result := json.CommonFailure("表单验证失败, 请检测输入")
 		c.String(http.StatusOK, result)

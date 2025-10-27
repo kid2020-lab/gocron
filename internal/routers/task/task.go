@@ -82,7 +82,7 @@ func Detail(c *gin.Context) {
 // 保存任务
 func Store(c *gin.Context) {
 	var form TaskForm
-	if err := c.ShouldBindJSON(&form); err != nil {
+	if err := c.ShouldBind(&form); err != nil {
 		json := utils.JsonResponse{}
 		result := json.CommonFailure("表单验证失败, 请检测输入")
 		c.String(http.StatusOK, result)
