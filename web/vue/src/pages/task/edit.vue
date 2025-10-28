@@ -74,7 +74,7 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="执行方式">
-              <el-select v-model.trim="form.protocol">
+              <el-select v-model.trim="form.protocol" @change="handleProtocolChange">
                 <el-option
                   v-for="item in protocolList"
                   :key="item.value"
@@ -97,8 +97,13 @@
             </el-form-item>
           </el-col>
           <el-col :span="8" v-else>
-            <el-form-item label="任务节点">
-              <el-select key="shell" v-model="selectedHosts" filterable multiple placeholder="请选择">
+            <el-form-item label="任务节点" prop="host_ids">
+              <el-select
+                key="shell"
+                v-model="form.host_ids"
+                filterable
+                multiple
+                placeholder="请选择任务节点">
                 <el-option
                   v-for="item in hosts"
                   :key="item.id"
@@ -253,37 +258,42 @@
   </el-container>
 </template>
 
+
 <script>
 import taskSidebar from './sidebar.vue'
 import taskService from '../../api/task'
 import notificationService from '../../api/notification'
 
+const createDefaultForm = () => ({
+  id: '',
+  name: '',
+  tag: '',
+  level: 1,
+  dependency_status: 1,
+  dependency_task_id: '',
+  spec: '',
+  protocol: 2,
+  http_method: 1,
+  command: '',
+  host_id: '',
+  host_ids: [],
+  timeout: 0,
+  multi: 2,
+  notify_status: 1,
+  notify_type: 2,
+  notify_receiver_id: '',
+  notify_keyword: '',
+  retry_times: 0,
+  retry_interval: 0,
+  remark: ''
+})
+
 export default {
   name: 'task-edit',
+  components: {taskSidebar},
   data () {
     return {
-      form: {
-        id: '',
-        name: '',
-        tag: '',
-        level: 1,
-        dependency_status: 1,
-        dependency_task_id: '',
-        spec: '',
-        protocol: 2,
-        http_method: 1,
-        command: '',
-        host_id: '',
-        timeout: 0,
-        multi: 2,
-        notify_status: 1,
-        notify_type: 2,
-        notify_receiver_id: '',
-        notify_keyword: '',
-        retry_times: 0,
-        retry_interval: 0,
-        remark: ''
-      },
+      form: createDefaultForm(),
       formRules: {
         name: [
           {required: true, message: '请输入任务名称', trigger: 'blur'}
@@ -305,6 +315,9 @@ export default {
         ],
         notify_keyword: [
           {required: true, message: '请输入要匹配的任务执行输出关键字', trigger: 'blur'}
+        ],
+        host_ids: [
+          {validator: () => true, trigger: 'change'}
         ]
       },
       httpMethods: [
@@ -392,7 +405,6 @@ export default {
       hosts: [],
       mailUsers: [],
       slackChannels: [],
-      selectedHosts: [],
       selectedMailNotifyIds: [],
       selectedSlackNotifyIds: []
     }
@@ -406,82 +418,127 @@ export default {
       return '请输入shell命令'
     }
   },
-  components: {taskSidebar},
+  watch: {
+    $route () {
+      this.initializeForm()
+    }
+  },
   created () {
-    const id = this.$route.params.id
-
-    taskService.detail(id, (taskData, hosts) => {
-      if (id && !taskData) {
-        this.$message.error('数据不存在')
-        this.cancel()
-        return
-      }
-      this.hosts = hosts || []
-      if (!taskData) {
-        return
-      }
-      this.form.id = taskData.id
-      this.form.name = taskData.name
-      this.form.tag = taskData.tag
-      this.form.level = taskData.level
-      if (taskData.dependency_status) {
-        this.form.dependency_status = taskData.dependency_status
-      }
-      this.form.dependency_task_id = taskData.dependency_task_id
-      this.form.spec = taskData.spec
-      this.form.protocol = taskData.protocol
-      if (taskData.http_method) {
-        this.form.http_method = taskData.http_method
-      }
-      this.form.command = taskData.command
-      this.form.timeout = taskData.timeout
-      this.form.multi = taskData.multi ? 1 : 2
-      this.form.notify_keyword = taskData.notify_keyword
-      this.form.notify_status = taskData.notify_status + 1
-      this.form.notify_receiver_id = taskData.notify_receiver_id
-      if (taskData.notify_type) {
-        this.form.notify_type = taskData.notify_type + 1
-      }
-      this.form.retry_times = taskData.retry_times
-      this.form.retry_interval = taskData.retry_interval
-      this.form.remark = taskData.remark
-      taskData.hosts = taskData.hosts || []
-      if (this.form.protocol === 2) {
-        taskData.hosts.forEach((v) => {
-          this.selectedHosts.push(v.host_id)
-        })
-      }
-
-      if (this.form.notify_status > 1) {
-        const notifyReceiverIds = this.form.notify_receiver_id.split(',')
-        if (this.form.notify_type === 2) {
-          notifyReceiverIds.forEach((v) => {
-            this.selectedMailNotifyIds.push(parseInt(v))
-          })
-        } else if (this.form.notify_type === 3) {
-          notifyReceiverIds.forEach((v) => {
-            this.selectedSlackNotifyIds.push(parseInt(v))
-          })
-        }
-      }
-    })
-
-    notificationService.mail((data) => {
-      this.mailUsers = data.mail_users
-    })
-
-    notificationService.slack((data) => {
-      this.slackChannels = data.channels
-    })
+    this.formRules.host_ids[0].validator = this.validateHostIds
+    this.loadNotificationOptions()
+    this.initializeForm()
   },
   methods: {
-    submit () {
-      this.$refs['form'].validate((valid) => {
-        if (!valid) {
-          return false
+    validateHostIds (rule, value, callback) {
+      if (Number(this.form.protocol) === 2 && (!value || value.length === 0)) {
+        callback(new Error('请选择任务节点'))
+        return
+      }
+      callback()
+    },
+    handleProtocolChange (value, skipValidation = false) {
+      const protocolValue = Number(value)
+      if (Number.isNaN(protocolValue)) {
+        return
+      }
+      this.form.protocol = protocolValue
+      if (protocolValue === 2) {
+        if (!skipValidation) {
+          this.$nextTick(() => {
+            this.$refs.form && this.$refs.form.validateField('host_ids')
+          })
         }
-        if (this.form.protocol === 2 && this.selectedHosts.length === 0) {
-          this.$message.error('请选择任务节点')
+        return
+      }
+      this.form.host_ids = []
+      this.form.host_id = ''
+      if (this.$refs.form) {
+        this.$refs.form.clearValidate('host_ids')
+      }
+    },
+    resetForm () {
+      if (this.$refs.form) {
+        this.$refs.form.clearValidate()
+      }
+      const defaults = createDefaultForm()
+      Object.assign(this.form, defaults)
+      this.selectedMailNotifyIds = []
+      this.selectedSlackNotifyIds = []
+      this.handleProtocolChange(this.form.protocol, true)
+    },
+    initializeForm () {
+      this.resetForm()
+      const id = this.$route.params.id
+      if (id) {
+        taskService.detail(id, (taskData, hosts) => {
+          this.hosts = hosts || []
+          if (!taskData) {
+            this.$message.error('数据不存在')
+            this.cancel()
+            return
+          }
+          this.populateForm(taskData)
+        })
+        return
+      }
+      taskService.detail(null, (...args) => {
+        const hosts = args.length > 1 ? args[1] : args[0]
+        this.hosts = hosts || []
+        this.handleProtocolChange(this.form.protocol, true)
+      })
+    },
+    populateForm (taskData) {
+      Object.assign(this.form, {
+        id: taskData.id,
+        name: taskData.name,
+        tag: taskData.tag,
+        level: taskData.level,
+        dependency_status: taskData.dependency_status || 1,
+        dependency_task_id: taskData.dependency_task_id || '',
+        spec: taskData.spec,
+        protocol: taskData.protocol,
+        http_method: taskData.http_method || 1,
+        command: taskData.command,
+        timeout: taskData.timeout,
+        multi: taskData.multi ? 1 : 2,
+        notify_keyword: taskData.notify_keyword,
+        notify_status: taskData.notify_status + 1,
+        notify_type: taskData.notify_type ? taskData.notify_type + 1 : 2,
+        notify_receiver_id: taskData.notify_receiver_id,
+        retry_times: taskData.retry_times,
+        retry_interval: taskData.retry_interval,
+        remark: taskData.remark || ''
+      })
+      const taskHosts = taskData.hosts || []
+      this.form.host_ids = Number(this.form.protocol) === 2 ? taskHosts.map(v => v.host_id) : []
+      this.handleProtocolChange(this.form.protocol, true)
+
+      this.selectedMailNotifyIds = []
+      this.selectedSlackNotifyIds = []
+      if (this.form.notify_status > 1 && this.form.notify_receiver_id) {
+        const notifyReceiverIds = this.form.notify_receiver_id.split(',').filter(Boolean)
+        if (this.form.notify_type === 2) {
+          this.selectedMailNotifyIds = notifyReceiverIds.map(v => parseInt(v))
+        } else if (this.form.notify_type === 3) {
+          this.selectedSlackNotifyIds = notifyReceiverIds.map(v => parseInt(v))
+        }
+      }
+    },
+    loadNotificationOptions () {
+      if (!this.mailUsers.length) {
+        notificationService.mail((data) => {
+          this.mailUsers = data.mail_users
+        })
+      }
+      if (!this.slackChannels.length) {
+        notificationService.slack((data) => {
+          this.slackChannels = data.channels
+        })
+      }
+    },
+    submit () {
+      this.$refs.form.validate((valid) => {
+        if (!valid) {
           return false
         }
         if (this.form.notify_status > 1) {
@@ -499,8 +556,11 @@ export default {
       })
     },
     save () {
-      if (this.form.protocol === 2 && this.selectedHosts.length > 0) {
-        this.form.host_id = this.selectedHosts.join(',')
+      if (Number(this.form.protocol) === 2) {
+        this.form.host_id = this.form.host_ids.join(',')
+      } else {
+        this.form.host_id = ''
+        this.form.host_ids = []
       }
       if (this.form.notify_status > 1 && this.form.notify_type === 2) {
         this.form.notify_receiver_id = this.selectedMailNotifyIds.join(',')

@@ -9,6 +9,12 @@ export default {
   },
 
   detail (id, callback) {
+    if (!id) {
+      httpClient.get('/host/all', {}, (hosts) => {
+        callback(null, hosts)
+      })
+      return
+    }
     httpClient.batchGet([
       { uri: `/task/${id}` },
       { uri: '/host/all' }
@@ -32,6 +38,6 @@ export default {
   },
 
   run (id, callback) {
-    httpClient.get(`/task/run/${id}`, {}, callback)
+    httpClient.get(`/task/run/${id}`, {_t: Date.now()}, callback)
   }
 }

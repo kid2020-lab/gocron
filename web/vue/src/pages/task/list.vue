@@ -185,6 +185,7 @@
 import taskSidebar from './sidebar.vue'
 import taskService from '../../api/task'
 import { useUserStore } from '../../stores/user'
+import { ElMessageBox } from 'element-plus'
 
 export default {
   name: 'task-list',
@@ -194,6 +195,7 @@ export default {
       tasks: [],
       hosts: [],
       taskTotal: 0,
+      isFirstActivate: true,
       searchParams: {
         page_size: 20,
         page: 1,
@@ -234,6 +236,13 @@ export default {
       this.searchParams.host_id = hostId
     }
 
+    this.search()
+  },
+  activated () {
+    if (this.isFirstActivate) {
+      this.isFirstActivate = false
+      return
+    }
     this.search()
   },
   methods: {
@@ -284,18 +293,30 @@ export default {
       })
     },
     runTask (item) {
-      if (confirm(`确定要手动执行任务 "${item.name}" 吗？`)) {
-        taskService.run(item.id, () => {
-          this.$message.success('任务已开始执行')
+      ElMessageBox.confirm(`确定要手动执行任务 "${item.name}" 吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      }).then(() => {
+        taskService.run(item.id, (...args) => {
+          const message = args[2]
+          this.$message.success(message || '任务已开始执行')
+          this.search()
         })
-      }
+      }).catch(() => {})
     },
     remove (item) {
-      if (confirm(`确定要删除任务 "${item.name}" 吗？`)) {
+      ElMessageBox.confirm(`确定要删除任务 "${item.name}" 吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      }).then(() => {
         taskService.remove(item.id, () => {
           this.refresh()
         })
-      }
+      }).catch(() => {})
     },
     jumpToLog (item) {
       this.$router.push(`/task/log?task_id=${item.id}`)
