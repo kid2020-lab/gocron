@@ -124,6 +124,8 @@ func Register(r *gin.Engine) {
 			webhookGroup.POST("/update", manage.UpdateWebHook)
 		}
 		systemGroup.GET("/login-log", loginlog.Index)
+		systemGroup.GET("/log-retention", manage.GetLogRetentionDays)
+		systemGroup.POST("/log-retention", manage.UpdateLogRetentionDays)
 	}
 
 	// API

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"strconv"
 )
 
 type Setting struct {
@@ -55,6 +56,13 @@ const (
 	WebhookUrlKey      = "url"
 )
 
+const (
+	SystemCode           = "system"
+	LogRetentionDaysKey  = "log_retention_days"
+	LogCleanupTimeKey    = "log_cleanup_time"
+	LogFileSizeLimitKey  = "log_file_size_limit"
+)
+
 // 初始化基本字段 邮件、slack等
 func (setting *Setting) InitBasicField() {
 	setting.Code = SlackCode
@@ -90,6 +98,24 @@ func (setting *Setting) InitBasicField() {
 	setting.Code = WebhookCode
 	setting.Key = WebhookUrlKey
 	setting.Value = ""
+	Db.Create(setting)
+	setting.Id = 0
+
+	setting.Code = SystemCode
+	setting.Key = LogRetentionDaysKey
+	setting.Value = "0"
+	Db.Create(setting)
+	setting.Id = 0
+
+	setting.Code = SystemCode
+	setting.Key = LogCleanupTimeKey
+	setting.Value = "03:00"
+	Db.Create(setting)
+	setting.Id = 0
+
+	setting.Code = SystemCode
+	setting.Key = LogFileSizeLimitKey
+	setting.Value = "0"
 	Db.Create(setting)
 }
 
@@ -277,4 +303,94 @@ func (setting *Setting) UpdateWebHook(url, template string) error {
 	return nil
 }
 
+// endregion
+
+// region 系统配置
+func (setting *Setting) GetLogRetentionDays() int {
+	var s Setting
+	err := Db.Where("code = ? AND key = ?", SystemCode, LogRetentionDaysKey).First(&s).Error
+	if err != nil {
+		return 0
+	}
+	var days int
+	if s.Value == "" {
+		return 0
+	}
+	if n, err := strconv.Atoi(s.Value); err == nil {
+		days = n
+	}
+	return days
+}
+
+func (setting *Setting) UpdateLogRetentionDays(days int) error {
+	var s Setting
+	err := Db.Where("code = ? AND key = ?", SystemCode, LogRetentionDaysKey).First(&s).Error
+	if err != nil {
+		// 记录不存在，创建新记录
+		s.Code = SystemCode
+		s.Key = LogRetentionDaysKey
+		s.Value = strconv.Itoa(days)
+		result := Db.Create(&s)
+		return result.Error
+	}
+	// 记录存在，更新
+	result := Db.Model(&Setting{}).Where("code = ? AND key = ?", SystemCode, LogRetentionDaysKey).Update("value", strconv.Itoa(days))
+	return result.Error
+}
+
+func (setting *Setting) GetLogCleanupTime() string {
+	var s Setting
+	err := Db.Where("code = ? AND key = ?", SystemCode, LogCleanupTimeKey).First(&s).Error
+	if err != nil {
+		return "03:00"
+	}
+	if s.Value == "" {
+		return "03:00"
+	}
+	return s.Value
+}
+
+func (setting *Setting) UpdateLogCleanupTime(cleanupTime string) error {
+	var s Setting
+	err := Db.Where("code = ? AND key = ?", SystemCode, LogCleanupTimeKey).First(&s).Error
+	if err != nil {
+		s.Code = SystemCode
+		s.Key = LogCleanupTimeKey
+		s.Value = cleanupTime
+		result := Db.Create(&s)
+		return result.Error
+	}
+	result := Db.Model(&Setting{}).Where("code = ? AND key = ?", SystemCode, LogCleanupTimeKey).Update("value", cleanupTime)
+	return result.Error
+}
+
+func (setting *Setting) GetLogFileSizeLimit() int {
+	var s Setting
+	err := Db.Where("code = ? AND key = ?", SystemCode, LogFileSizeLimitKey).First(&s).Error
+	if err != nil {
+		return 0
+	}
+	var size int
+	if s.Value == "" {
+		return 0
+	}
+	if n, err := strconv.Atoi(s.Value); err == nil {
+		size = n
+	}
+	return size
+}
+
+func (setting *Setting) UpdateLogFileSizeLimit(size int) error {
+	var s Setting
+	err := Db.Where("code = ? AND key = ?", SystemCode, LogFileSizeLimitKey).First(&s).Error
+	if err != nil {
+		s.Code = SystemCode
+		s.Key = LogFileSizeLimitKey
+		s.Value = strconv.Itoa(size)
+		result := Db.Create(&s)
+		return result.Error
+	}
+	result := Db.Model(&Setting{}).Where("code = ? AND key = ?", SystemCode, LogFileSizeLimitKey).Update("value", strconv.Itoa(size))
+	return result.Error
+}
 // endregion

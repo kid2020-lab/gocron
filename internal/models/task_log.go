@@ -80,6 +80,16 @@ func (taskLog *TaskLog) Remove(id int) (int64, error) {
 	return result.RowsAffected, result.Error
 }
 
+// 删除N天前的日志
+func (taskLog *TaskLog) RemoveByDays(days int) (int64, error) {
+	if days <= 0 {
+		return 0, nil
+	}
+	t := time.Now().AddDate(0, 0, -days)
+	result := Db.Where("start_time < ?", t).Delete(&TaskLog{})
+	return result.RowsAffected, result.Error
+}
+
 func (taskLog *TaskLog) Total(params CommonMap) (int64, error) {
 	var count int64
 	query := Db.Model(&TaskLog{})

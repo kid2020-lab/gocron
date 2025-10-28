@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -133,6 +134,47 @@ func (task Task) Initialize() {
 		page++
 	}
 	logger.Infof("定时任务初始化完成, 共%d个定时任务添加到调度器", taskNum)
+	
+	// 添加日志自动清理任务
+	task.initLogCleanupTask()
+}
+
+// 初始化日志清理任务
+func (task Task) initLogCleanupTask() {
+	settingModel := new(models.Setting)
+	cleanupTime := settingModel.GetLogCleanupTime()
+	// 解析时间 HH:MM
+	var hour, minute int
+	fmt.Sscanf(cleanupTime, "%d:%d", &hour, &minute)
+	// 生成cron表达式: 秒 分 时 日 月 周
+	cronSpec := fmt.Sprintf("0 %d %d * * *", minute, hour)
+	
+	serviceCron.AddFunc(cronSpec, func() {
+		settingModel := new(models.Setting)
+		days := settingModel.GetLogRetentionDays()
+		if days > 0 {
+			// 清理数据库日志
+			taskLogModel := new(models.TaskLog)
+			count, err := taskLogModel.RemoveByDays(days)
+			if err != nil {
+				logger.Errorf("自动清理数据库日志失败: %s", err)
+			} else {
+				logger.Infof("自动清理%d天前的数据库日志, 删除%d条记录", days, count)
+			}
+			// 清理日志文件
+			cleanupLogFiles()
+		}
+	}, "log-cleanup")
+	logger.Infof("日志自动清理任务已添加, 执行时间: %s", cleanupTime)
+}
+
+// 重新加载日志清理任务
+func (task Task) ReloadLogCleanupTask() {
+	// 先移除旧任务
+	serviceCron.RemoveJob("log-cleanup")
+	// 重新添加任务
+	task.initLogCleanupTask()
+	logger.Info("日志清理任务已重新加载")
 }
 
 // 批量添加任务
@@ -494,4 +536,39 @@ func execJob(handler Handler, taskModel models.Task, taskUniqueId int64) TaskRes
 	}
 
 	return TaskResult{Result: output, Err: err, RetryTimes: taskModel.RetryTimes}
+}
+
+// 清理日志文件
+func cleanupLogFiles() {
+	settingModel := new(models.Setting)
+	fileSizeLimit := settingModel.GetLogFileSizeLimit()
+	
+	// 如果设置为0，不清理日志文件
+	if fileSizeLimit <= 0 {
+		return
+	}
+	
+	logDir := "log"
+	logFile := "cron.log"
+	
+	// 检查日志文件是否存在
+	logPath := fmt.Sprintf("%s/%s", logDir, logFile)
+	fileInfo, err := os.Stat(logPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			logger.Errorf("检查日志文件失败: %s", err)
+		}
+		return
+	}
+	
+	// 如果文件大小超过限制，则清空
+	maxSize := int64(fileSizeLimit) * 1024 * 1024 // 转换为MB
+	if fileInfo.Size() > maxSize {
+		err := os.Truncate(logPath, 0)
+		if err != nil {
+			logger.Errorf("清空日志文件失败: %s", err)
+		} else {
+			logger.Infof("日志文件超过%dMB，已清空: %s", fileSizeLimit, logPath)
+		}
+	}
 }

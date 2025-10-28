@@ -116,6 +116,11 @@ const routes = [
     path: '/system/login-log',
     name: 'login-log',
     component: () => import('../pages/system/loginLog.vue')
+  },
+  {
+    path: '/system/log-retention',
+    name: 'log-retention',
+    component: () => import('../pages/system/logRetention.vue')
   }
 ]
 

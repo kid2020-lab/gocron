@@ -10,6 +10,7 @@ import (
 	"github.com/gocronx-team/gocron/internal/models"
 	"github.com/gocronx-team/gocron/internal/modules/logger"
 	"github.com/gocronx-team/gocron/internal/modules/utils"
+	"github.com/gocronx-team/gocron/internal/service"
 )
 
 func Slack(c *gin.Context) {
@@ -186,4 +187,58 @@ func UpdateWebHook(c *gin.Context) {
 	c.String(http.StatusOK, result)
 }
 
+// endregion
+
+// region 系统配置
+func GetLogRetentionDays(c *gin.Context) {
+	settingModel := new(models.Setting)
+	days := settingModel.GetLogRetentionDays()
+	cleanupTime := settingModel.GetLogCleanupTime()
+	fileSizeLimit := settingModel.GetLogFileSizeLimit()
+	jsonResp := utils.JsonResponse{}
+	result := jsonResp.Success("", map[string]interface{}{
+		"days":           days,
+		"cleanup_time":   cleanupTime,
+		"file_size_limit": fileSizeLimit,
+	})
+	c.String(http.StatusOK, result)
+}
+
+func UpdateLogRetentionDays(c *gin.Context) {
+	var form struct {
+		Days          int    `json:"days" binding:"min=0,max=3650"`
+		CleanupTime   string `json:"cleanup_time" binding:"required"`
+		FileSizeLimit int    `json:"file_size_limit" binding:"min=0,max=10240"`
+	}
+	if err := c.ShouldBindJSON(&form); err != nil {
+		json := utils.JsonResponse{}
+		result := json.CommonFailure("表单验证失败, 请检测输入")
+		c.String(http.StatusOK, result)
+		return
+	}
+	
+	settingModel := new(models.Setting)
+	err := settingModel.UpdateLogRetentionDays(form.Days)
+	if err != nil {
+		result := utils.JsonResponseByErr(err)
+		c.String(http.StatusOK, result)
+		return
+	}
+	err = settingModel.UpdateLogCleanupTime(form.CleanupTime)
+	if err != nil {
+		result := utils.JsonResponseByErr(err)
+		c.String(http.StatusOK, result)
+		return
+	}
+	err = settingModel.UpdateLogFileSizeLimit(form.FileSizeLimit)
+	if err != nil {
+		result := utils.JsonResponseByErr(err)
+		c.String(http.StatusOK, result)
+		return
+	}
+	// 重新加载日志清理任务
+	service.ServiceTask.ReloadLogCleanupTask()
+	result := utils.JsonResponseByErr(nil)
+	c.String(http.StatusOK, result)
+}
 // endregion

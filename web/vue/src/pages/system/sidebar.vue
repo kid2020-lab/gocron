@@ -9,6 +9,7 @@
       router>
       <el-menu-item index="/system">通知配置</el-menu-item>
       <el-menu-item index="/system/login-log">登录日志</el-menu-item>
+      <el-menu-item index="/system/log-retention">日志清理</el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -23,6 +24,9 @@ export default {
     currentRoute () {
       if (this.$route.path === '/system/login-log') {
         return '/system/login-log'
+      }
+      if (this.$route.path === '/system/log-retention') {
+        return '/system/log-retention'
       }
       return '/system'
     }
