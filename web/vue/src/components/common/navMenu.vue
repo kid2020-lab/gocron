@@ -1,5 +1,5 @@
 <template>
-  <div v-cloak>
+  <div v-cloak class="nav-container">
     <el-menu
       :default-active="currentRoute"
       mode="horizontal"
@@ -11,16 +11,23 @@
       <el-menu-item index="/host">任务节点</el-menu-item>
       <el-menu-item v-if="userStore.isAdmin" index="/user">用户管理</el-menu-item>
       <el-menu-item v-if="userStore.isAdmin" index="/system">系统管理</el-menu-item>
-      <el-sub-menu v-if="userStore.isLogin" index="user-menu" style="margin-left: auto;">
-        <template #title>
+    </el-menu>
+    <div v-if="userStore.isLogin" class="user-menu">
+      <el-dropdown trigger="click">
+        <span class="user-info">
           <el-icon><User /></el-icon>
           <span>{{ userStore.username || '用户' }}</span>
+          <el-icon><ArrowDown /></el-icon>
+        </span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="$router.push('/user/edit-my-password')">修改密码</el-dropdown-item>
+            <el-dropdown-item @click="$router.push('/user/two-factor')">双因素认证</el-dropdown-item>
+            <el-dropdown-item divided @click="logout">退出</el-dropdown-item>
+          </el-dropdown-menu>
         </template>
-        <el-menu-item @click="$router.push('/user/edit-my-password')">修改密码</el-menu-item>
-        <el-menu-item @click="$router.push('/user/two-factor')">双因素认证</el-menu-item>
-        <el-menu-item @click="logout">退出</el-menu-item>
-      </el-sub-menu>
-    </el-menu>
+      </el-dropdown>
+    </div>
   </div>
 </template>
 
@@ -49,8 +56,29 @@ const logout = () => {
 </script>
 
 <style scoped>
-.el-menu {
+.nav-container {
   display: flex;
   align-items: center;
+  background-color: #545c64;
+}
+.el-menu {
+  flex: 1;
+  border: none;
+}
+.user-menu {
+  padding: 0 20px;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.user-info:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 </style>
