@@ -75,7 +75,7 @@ func (model *BaseModel) pageLimitOffset() int {
 func CreateDb() *gorm.DB {
 	dsn := getDbEngineDSN(app.Setting)
 	var dialector gorm.Dialector
-	
+
 	engine := strings.ToLower(app.Setting.Db.Engine)
 	switch engine {
 	case "mysql":
@@ -127,7 +127,7 @@ func CreateDb() *gorm.DB {
 func CreateTmpDb(setting *setting.Setting) (*gorm.DB, error) {
 	dsn := getDbEngineDSN(setting)
 	var dialector gorm.Dialector
-	
+
 	engine := strings.ToLower(setting.Db.Engine)
 	switch engine {
 	case "mysql":
@@ -177,7 +177,9 @@ func keepDbAlived(db *gorm.DB) {
 		}
 		err = sqlDB.Ping()
 		if err != nil {
-			glogger.Infof("database ping: %s", err)
+			glogger.Infof("database ping failed: %s", err)
+		} else {
+			glogger.Infof("database ping: ok")
 		}
 	}
 }

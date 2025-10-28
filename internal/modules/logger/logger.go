@@ -146,15 +146,11 @@ func getLogConfig() string {
         </formats>
     </seelog>`
 
-	consoleConfig := ""
-	if gin.Mode() == gin.DebugMode {
-		consoleConfig =
-			`
+	consoleConfig := `
             <filter levels="info,debug,critical,warn,error">
                 <console />
             </filter>
          `
-	}
 	config = fmt.Sprintf(config, consoleConfig)
 
 	return config
