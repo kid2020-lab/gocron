@@ -315,6 +315,38 @@ func batchChangeStatus(c *gin.Context, status models.Status) {
 	c.String(http.StatusOK, result)
 }
 
+// 批量删除任务
+func BatchRemove(c *gin.Context) {
+	var form struct {
+		Ids []int `json:"ids" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&form); err != nil {
+		json := utils.JsonResponse{}
+		result := json.CommonFailure("参数错误")
+		c.String(http.StatusOK, result)
+		return
+	}
+
+	json := utils.JsonResponse{}
+	taskModel := new(models.Task)
+	taskHostModel := new(models.TaskHost)
+	successCount := 0
+	for _, id := range form.Ids {
+		_, err := taskModel.Delete(id)
+		if err == nil {
+			successCount++
+			taskHostModel.Remove(id)
+			service.ServiceTask.Remove(id)
+		}
+	}
+
+	result := json.Success("操作成功", map[string]interface{}{
+		"success_count": successCount,
+		"total_count":   len(form.Ids),
+	})
+	c.String(http.StatusOK, result)
+}
+
 // 改变任务状态
 func changeStatus(c *gin.Context, status models.Status) {
 	id, _ := strconv.Atoi(c.Param("id"))

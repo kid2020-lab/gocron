@@ -47,5 +47,9 @@ export default {
 
   batchDisable (ids, callback) {
     httpClient.postJson('/task/batch-disable', { ids }, callback)
+  },
+
+  batchRemove (ids, callback) {
+    httpClient.postJson('/task/batch-remove', { ids }, callback)
   }
 }

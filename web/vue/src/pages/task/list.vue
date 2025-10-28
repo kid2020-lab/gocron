@@ -55,6 +55,7 @@
         <span v-if="isAdmin && selectedTasks.length > 0" style="margin-right: 10px; color: #909399;">已选择 {{ selectedTasks.length }} 个任务</span>
         <el-button v-if="isAdmin" type="success" size="default" @click="batchEnable" :disabled="selectedTasks.length === 0">批量启用</el-button>
         <el-button v-if="isAdmin" type="warning" size="default" @click="batchDisable" :disabled="selectedTasks.length === 0">批量禁用</el-button>
+        <el-button v-if="isAdmin" type="danger" size="default" @click="batchRemove" :disabled="selectedTasks.length === 0">批量删除</el-button>
         <el-button type="primary" @click="toEdit(null)" v-if="isAdmin">新增</el-button>
         <el-button type="info" @click="refresh">刷新</el-button>
       </el-col>
@@ -385,6 +386,28 @@ export default {
         const ids = this.selectedTasks.map(task => task.id)
         taskService.batchDisable(ids, () => {
           this.$message.success('批量禁用成功')
+          this.selectedTasks = []
+          this.search()
+        })
+      }).catch(() => {})
+    },
+    batchRemove () {
+      if (this.selectedTasks.length === 0) {
+        this.$message.warning('请选择要删除的任务')
+        return
+      }
+      ElMessageBox.confirm(
+        `确定要删除选中的 ${this.selectedTasks.length} 个任务吗？此操作不可恢复！`,
+        '批量删除任务',
+        {
+          confirmButtonText: '确定删除',
+          cancelButtonText: '取消',
+          type: 'error'
+        }
+      ).then(() => {
+        const ids = this.selectedTasks.map(task => task.id)
+        taskService.batchRemove(ids, () => {
+          this.$message.success('批量删除成功')
           this.selectedTasks = []
           this.search()
         })
