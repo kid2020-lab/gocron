@@ -172,6 +172,12 @@ func testDbConnection(form InstallForm) error {
 	s.Db.Password = form.DbPassword
 	s.Db.Database = form.DbName
 	s.Db.Charset = "utf8"
+	
+	// SQLite 不需要测试连接，会自动创建文件
+	if s.Db.Engine == "sqlite" {
+		return nil
+	}
+	
 	db, err := models.CreateTmpDb(&s)
 	if err != nil {
 		return err

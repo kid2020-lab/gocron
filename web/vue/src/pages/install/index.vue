@@ -105,18 +105,6 @@ export default {
         db_type: [
           {required: true, message: '请选择数据库', trigger: 'blur'}
         ],
-        db_host: [
-          {required: true, message: '请输入数据库主机名', trigger: 'blur'}
-        ],
-        db_port: [
-          {type: 'number', required: true, message: '请输入数据库端口', trigger: 'blur'}
-        ],
-        db_username: [
-          {required: true, message: '请输入数据库用户名', trigger: 'blur'}
-        ],
-        db_password: [
-          {required: true, message: '请输入数据库密码', trigger: 'blur'}
-        ],
         db_name: [
           {required: true, message: '请输入数据库名称', trigger: 'blur'}
         ],
@@ -170,6 +158,26 @@ export default {
       }
     },
     submit () {
+      // 动态验证：非 SQLite 数据库需要验证主机名、端口、用户名和密码
+      if (this.form.db_type !== 'sqlite') {
+        if (!this.form.db_host) {
+          this.$message.error('请输入数据库主机名')
+          return
+        }
+        if (!this.form.db_port) {
+          this.$message.error('请输入数据库端口')
+          return
+        }
+        if (!this.form.db_username) {
+          this.$message.error('请输入数据库用户名')
+          return
+        }
+        if (!this.form.db_password) {
+          this.$message.error('请输入数据库密码')
+          return
+        }
+      }
+      
       this.$refs['form'].validate((valid) => {
         if (!valid) {
           return false

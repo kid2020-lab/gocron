@@ -113,8 +113,13 @@ func CreateDb() *gorm.DB {
 		glogger.Fatal("获取数据库连接失败", err)
 	}
 
-	sqlDB.SetMaxIdleConns(app.Setting.Db.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(app.Setting.Db.MaxOpenConns)
+	// SQLite 需要特殊的连接池配置
+	if engine == "sqlite" {
+		sqlDB.SetMaxOpenConns(1) // SQLite 只允许一个写连接
+	} else {
+		sqlDB.SetMaxIdleConns(app.Setting.Db.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(app.Setting.Db.MaxOpenConns)
+	}
 	sqlDB.SetConnMaxLifetime(dbMaxLiftTime)
 
 	if app.Setting.Db.Prefix != "" {
