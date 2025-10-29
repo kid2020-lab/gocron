@@ -22,7 +22,7 @@ A lightweight cron task management system developed in Go, designed to replace L
 ## Requirements
 
 * Go 1.23+
-* MySQL or PostgreSQL
+* MySQL, PostgreSQL, or SQLite
 * Node.js 18+ (for frontend development)
 
 ## Quick Start
@@ -39,6 +39,8 @@ go mod download
 
 # 3. Configure database
 # Edit ~/.gocron/conf/app.ini
+# For MySQL/PostgreSQL: see examples in project root
+# For SQLite: copy app.ini.sqlite.example
 
 # 4. Start backend (with hot reload)
 air
@@ -90,7 +92,7 @@ gocron-node -enable-tls # Enable TLS
 * Backend: Gin + GORM + gRPC
 * Frontend: Vue3 + Element Plus + Vite
 * Scheduler: Cron
-* Database: MySQL / PostgreSQL
+* Database: MySQL / PostgreSQL / SQLite
 
 ## Development Tools
 

@@ -13,7 +13,7 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-row>
+        <el-row v-if="form.db_type !== 'sqlite'">
           <el-col :span="12">
             <el-form-item label="主机名" prop="db_host">
               <el-input v-model="form.db_host"></el-input>
@@ -25,7 +25,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <el-row v-if="form.db_type !== 'sqlite'">
           <el-col :span="12">
             <el-form-item label="用户名" prop="db_username">
               <el-input v-model="form.db_username"></el-input>
@@ -39,8 +39,8 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="数据库名称" prop="db_name">
-              <el-input v-model="form.db_name" placeholder="如果数据库不存在, 需提前创建"></el-input>
+            <el-form-item :label="form.db_type === 'sqlite' ? '数据库文件路径' : '数据库名称'" prop="db_name">
+              <el-input v-model="form.db_name" :placeholder="form.db_type === 'sqlite' ? './data/gocron.db' : '如果数据库不存在, 需提前创建'"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -143,20 +143,31 @@ export default {
         {
           value: 'postgres',
           label: 'PostgreSql'
+        },
+        {
+          value: 'sqlite',
+          label: 'SQLite'
         }
       ],
       default_ports: {
         'mysql': 3306,
-        'postgres': 5432
+        'postgres': 5432,
+        'sqlite': 0
       }
     }
   },
   methods: {
     update_port (dbType) {
-      console.log(dbType)
-      console.log(this.default_ports[dbType])
       this.form['db_port'] = this.default_ports[dbType]
-      console.log(this.form['db_port'])
+      if (dbType === 'sqlite') {
+        this.form['db_host'] = ''
+        this.form['db_username'] = ''
+        this.form['db_password'] = ''
+        this.form['db_name'] = './data/gocron.db'
+      } else {
+        this.form['db_host'] = '127.0.0.1'
+        this.form['db_name'] = ''
+      }
     },
     submit () {
       this.$refs['form'].validate((valid) => {

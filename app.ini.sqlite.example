@@ -1,0 +1,42 @@
+# gocron SQLite 配置示例
+# 将此文件复制到 ~/.gocron/conf/app.ini 并修改相应配置
+
+[default]
+# 数据库配置 - SQLite
+db.engine=sqlite
+# SQLite 数据库文件路径（相对路径或绝对路径）
+# 相对路径：相对于程序运行目录
+# 绝对路径：/path/to/gocron.db 或 ~/.gocron/data/gocron.db
+db.database=./data/gocron.db
+# SQLite 不需要以下配置，但保留以兼容配置文件格式
+db.host=
+db.port=
+db.user=
+db.password=
+db.charset=utf8
+db.prefix=
+db.max.idle.conns=30
+db.max.open.conns=100
+
+# 应用配置
+app.name=定时任务管理系统
+
+# API配置
+api.key=
+api.secret=
+api.sign.enable=true
+
+# 允许访问的IP列表，多个IP用逗号分隔，为空表示不限制
+allow_ips=
+
+# 并发队列大小
+concurrency.queue=500
+
+# 认证密钥（自动生成，无需手动配置）
+auth_secret=
+
+# TLS配置
+enable_tls=false
+ca_file=
+cert_file=
+key_file=

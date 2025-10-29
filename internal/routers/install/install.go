@@ -19,12 +19,12 @@ import (
 // 系统安装
 
 type InstallForm struct {
-	DbType               string `form:"db_type" binding:"required,oneof=mysql postgres"`
-	DbHost               string `form:"db_host" binding:"required,max=50"`
-	DbPort               int    `form:"db_port" binding:"required,min=1,max=65535"`
-	DbUsername           string `form:"db_username" binding:"required,max=50"`
-	DbPassword           string `form:"db_password" binding:"required,max=30"`
-	DbName               string `form:"db_name" binding:"required,max=50"`
+	DbType               string `form:"db_type" binding:"required,oneof=mysql postgres sqlite"`
+	DbHost               string `form:"db_host" binding:"max=50"`
+	DbPort               int    `form:"db_port" binding:"min=0,max=65535"`
+	DbUsername           string `form:"db_username" binding:"max=50"`
+	DbPassword           string `form:"db_password" binding:"max=30"`
+	DbName               string `form:"db_name" binding:"required,max=200"`
 	DbTablePrefix        string `form:"db_table_prefix" binding:"max=20"`
 	AdminUsername        string `form:"admin_username" binding:"required,min=3"`
 	AdminPassword        string `form:"admin_password" binding:"required,min=6"`
@@ -118,10 +118,16 @@ func Store(c *gin.Context) {
 
 // 配置写入文件
 func writeConfig(form InstallForm) error {
+	dbHost := form.DbHost
+	dbPort := strconv.Itoa(form.DbPort)
+	if form.DbType == "sqlite" {
+		dbHost = ""
+		dbPort = "0"
+	}
 	dbConfig := []string{
 		"db.engine", form.DbType,
-		"db.host", form.DbHost,
-		"db.port", strconv.Itoa(form.DbPort),
+		"db.host", dbHost,
+		"db.port", dbPort,
 		"db.user", form.DbUsername,
 		"db.password", form.DbPassword,
 		"db.database", form.DbName,

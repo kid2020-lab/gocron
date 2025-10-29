@@ -22,7 +22,7 @@
 ## 环境要求
 
 * Go 1.23+
-* MySQL 或 PostgreSQL
+* MySQL、PostgreSQL 或 SQLite
 * Node.js 18+ (前端开发)
 
 ## 快速开始
@@ -39,6 +39,8 @@ go mod download
 
 # 3. 配置数据库
 # 编辑 ~/.gocron/conf/app.ini
+# MySQL/PostgreSQL 配置示例见项目根目录
+# SQLite 配置: 复制 app.ini.sqlite.example
 
 # 4. 启动后端（热更新）
 air
@@ -90,7 +92,7 @@ gocron-node -enable-tls # 启用TLS
 * 后端：Gin + GORM + gRPC
 * 前端：Vue3 + Element Plus + Vite
 * 定时任务：Cron
-* 数据库：MySQL / PostgreSQL
+* 数据库：MySQL / PostgreSQL / SQLite
 
 ## 开发工具
 
