@@ -1,32 +1,35 @@
-FROM golang:1.15-alpine as builder
+FROM node:20-alpine AS frontend-builder
 
-RUN apk update \
-    && apk add --no-cache git ca-certificates make bash yarn nodejs
+WORKDIR /app
+COPY web/vue/package.json web/vue/yarn.lock ./
+RUN yarn install --frozen-lockfile
+COPY web/vue ./
+RUN yarn build
 
-RUN go env -w GO111MODULE=on && \
-    go env -w GOPROXY=https://goproxy.cn,direct
+FROM golang:1.23-alpine AS backend-builder
+
+RUN apk add --no-cache git make
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+COPY --from=frontend-builder /app/dist ./web/vue/dist
+
+RUN go install github.com/rakyll/statik@latest && \
+    go generate ./... && \
+    CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o gocron ./cmd/gocron
+
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates tzdata && \
+    addgroup -S app && \
+    adduser -S -g app app
 
 WORKDIR /app
 
-RUN git clone https://github.com/gocronx-team/gocron.git \
-    && cd gocron \
-    && yarn config set ignore-engines true \
-    && make install-vue \
-    && make build-vue \
-    && make statik \
-    && CGO_ENABLED=0 make gocron
-
-FROM alpine:3.12
-
-RUN apk add --no-cache ca-certificates tzdata \
-    && addgroup -S app \
-    && adduser -S -g app app
-
-RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-
-WORKDIR /app
-
-COPY --from=builder /app/gocron/bin/gocron .
+COPY --from=backend-builder /app/gocron .
 
 RUN chown -R app:app ./
 
