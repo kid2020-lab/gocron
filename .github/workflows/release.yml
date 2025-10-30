@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release'
+        required: true
+        default: 'v1.0.0'
 
 permissions:
   contents: write
@@ -102,7 +108,7 @@ jobs:
         echo "4. Run \`./gocron-node\` to start the task agent" >> release_notes.md
         echo "5. Visit http://localhost:5920 to access the web interface" >> release_notes.md
         echo "" >> release_notes.md
-        echo "For detailed installation and configuration instructions, please refer to the [README](https://github.com/gocronx-team/gocron/blob/main/README.md)." >> release_notes.md
+        echo "For detailed installation and configuration instructions, please refer to the [README](https://github.com/gocronx-team/gocron/blob/master/README.md)." >> release_notes.md
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
