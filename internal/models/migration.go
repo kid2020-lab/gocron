@@ -37,7 +37,7 @@ func (migration *Migration) Upgrade(oldVersionId int) {
 		return
 	}
 
-	versionIds := []int{110, 122, 130, 140, 150, 151}
+	versionIds := []int{110, 122, 130, 140, 150, 151, 152, 153}
 	upgradeFuncs := []func(*gorm.DB) error{
 		migration.upgradeFor110,
 		migration.upgradeFor122,
@@ -45,6 +45,8 @@ func (migration *Migration) Upgrade(oldVersionId int) {
 		migration.upgradeFor140,
 		migration.upgradeFor150,
 		migration.upgradeFor151,
+		migration.upgradeFor152,
+		migration.upgradeFor153,
 	}
 
 	startIndex := -1
@@ -192,40 +194,57 @@ func (m *Migration) upgradeFor150(tx *gorm.DB) error {
 		}
 	}
 
-	settingModel := new(Setting)
-	settingModel.Code = MailCode
-	settingModel.Key = MailTemplateKey
-	settingModel.Value = emailTemplate
-	err := tx.Create(settingModel).Error
-	if err != nil {
-		return err
+	// 检查并创建邮件模板配置
+	var count int64
+	tx.Model(&Setting{}).Where("code = ? AND key = ?", MailCode, MailTemplateKey).Count(&count)
+	if count == 0 {
+		settingModel := &Setting{
+			Code:  MailCode,
+			Key:   MailTemplateKey,
+			Value: emailTemplate,
+		}
+		if err := tx.Create(settingModel).Error; err != nil {
+			return err
+		}
 	}
 
-	settingModel.Id = 0
-	settingModel.Code = SlackCode
-	settingModel.Key = SlackTemplateKey
-	settingModel.Value = slackTemplate
-	err = tx.Create(settingModel).Error
-	if err != nil {
-		return err
+	// 检查并创建Slack模板配置
+	tx.Model(&Setting{}).Where("code = ? AND key = ?", SlackCode, SlackTemplateKey).Count(&count)
+	if count == 0 {
+		settingModel := &Setting{
+			Code:  SlackCode,
+			Key:   SlackTemplateKey,
+			Value: slackTemplate,
+		}
+		if err := tx.Create(settingModel).Error; err != nil {
+			return err
+		}
 	}
 
-	settingModel.Id = 0
-	settingModel.Code = WebhookCode
-	settingModel.Key = WebhookUrlKey
-	settingModel.Value = ""
-	err = tx.Create(settingModel).Error
-	if err != nil {
-		return err
+	// 检查并创建Webhook URL配置
+	tx.Model(&Setting{}).Where("code = ? AND key = ?", WebhookCode, WebhookUrlKey).Count(&count)
+	if count == 0 {
+		settingModel := &Setting{
+			Code:  WebhookCode,
+			Key:   WebhookUrlKey,
+			Value: "",
+		}
+		if err := tx.Create(settingModel).Error; err != nil {
+			return err
+		}
 	}
 
-	settingModel.Id = 0
-	settingModel.Code = WebhookCode
-	settingModel.Key = WebhookTemplateKey
-	settingModel.Value = webhookTemplate
-	err = tx.Create(settingModel).Error
-	if err != nil {
-		return err
+	// 检查并创建Webhook模板配置
+	tx.Model(&Setting{}).Where("code = ? AND key = ?", WebhookCode, WebhookTemplateKey).Count(&count)
+	if count == 0 {
+		settingModel := &Setting{
+			Code:  WebhookCode,
+			Key:   WebhookTemplateKey,
+			Value: webhookTemplate,
+		}
+		if err := tx.Create(settingModel).Error; err != nil {
+			return err
+		}
 	}
 
 	logger.Info("已升级到v1.5\n")
@@ -256,4 +275,176 @@ func (m *Migration) upgradeFor151(tx *gorm.DB) error {
 	logger.Info("已升级到v1.5.1\n")
 
 	return nil
+}
+
+// 升级到v1.5.2版本 - 修复 SQLite host 表 AUTOINCREMENT
+func (m *Migration) upgradeFor152(tx *gorm.DB) error {
+	logger.Info("开始升级到v1.5.2 - 修复 host 表自增主键")
+
+	// 只对 SQLite 数据库执行修复
+	if tx.Dialector.Name() == "sqlite" {
+		// 检查表结构是否已经正确
+		var tableSQL string
+		err := tx.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='host'").Scan(&tableSQL).Error
+		if err != nil {
+			return err
+		}
+
+		// 如果表结构已包含 AUTOINCREMENT，跳过修复
+		if len(tableSQL) > 0 && (tableSQL == "" || !contains(tableSQL, "AUTOINCREMENT")) {
+			logger.Info("检测到 host 表需要修复")
+
+			// 检查是否有数据
+			var hasData int64
+			tx.Raw("SELECT COUNT(*) FROM host").Scan(&hasData)
+
+			// 重建表以支持 AUTOINCREMENT
+			err = tx.Exec(`
+				CREATE TABLE IF NOT EXISTS host_new (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					name varchar(64) NOT NULL,
+					alias varchar(32) NOT NULL DEFAULT '',
+					port integer NOT NULL DEFAULT 5921,
+					remark varchar(100) NOT NULL DEFAULT ''
+				);
+			`).Error
+			if err != nil {
+				return err
+			}
+
+			// 如果有数据，迁移数据
+			if hasData > 0 {
+				err = tx.Exec(`
+					INSERT INTO host_new (name, alias, port, remark)
+					SELECT name, alias, port, remark FROM host WHERE name IS NOT NULL;
+				`).Error
+				if err != nil {
+					return err
+				}
+			}
+
+			// 删除旧表
+			err = tx.Exec(`DROP TABLE host;`).Error
+			if err != nil {
+				return err
+			}
+
+			// 重命名新表
+			err = tx.Exec(`ALTER TABLE host_new RENAME TO host;`).Error
+			if err != nil {
+				return err
+			}
+
+			logger.Info("host 表已重建，支持自增主键")
+		} else {
+			logger.Info("host 表结构正确，无需修复")
+		}
+	}
+
+	logger.Info("已升级到v1.5.2\n")
+
+	return nil
+}
+
+// 升级到v1.5.3版本 - 修复 SQLite task_log 表 AUTOINCREMENT
+func (m *Migration) upgradeFor153(tx *gorm.DB) error {
+	logger.Info("开始升级到v1.5.3 - 修复 task_log 表自增主键")
+
+	// 只对 SQLite 数据库执行修复
+	if tx.Dialector.Name() == "sqlite" {
+		var tableSQL string
+		err := tx.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='task_log'").Scan(&tableSQL).Error
+		if err != nil {
+			return err
+		}
+
+		if len(tableSQL) > 0 && !contains(tableSQL, "AUTOINCREMENT") {
+			logger.Info("检测到 task_log 表需要修复")
+
+			err = tx.Exec(`
+				CREATE TABLE IF NOT EXISTS task_log_new (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					task_id integer NOT NULL DEFAULT 0,
+					name varchar(32) NOT NULL,
+					spec varchar(64) NOT NULL,
+					protocol tinyint NOT NULL,
+					command varchar(256) NOT NULL,
+					timeout mediumint NOT NULL DEFAULT 0,
+					retry_times tinyint NOT NULL DEFAULT 0,
+					hostname varchar(128) NOT NULL DEFAULT '',
+					start_time datetime,
+					end_time datetime,
+					status tinyint NOT NULL DEFAULT 1,
+					result mediumtext NOT NULL
+				);
+			`).Error
+			if err != nil {
+				return err
+			}
+
+			// 迁移最近的数据（最多10000条）
+			var hasData int64
+			tx.Raw("SELECT COUNT(*) FROM task_log").Scan(&hasData)
+			if hasData > 0 {
+				err = tx.Exec(`
+					INSERT INTO task_log_new (task_id, name, spec, protocol, command, timeout, retry_times, hostname, start_time, end_time, status, result)
+					SELECT task_id, name, spec, protocol, command, timeout, retry_times, hostname, start_time, end_time, status, result 
+					FROM task_log 
+					WHERE task_id IS NOT NULL
+					ORDER BY start_time DESC 
+					LIMIT 10000;
+				`).Error
+				if err != nil {
+					return err
+				}
+			}
+
+			err = tx.Exec(`DROP TABLE task_log;`).Error
+			if err != nil {
+				return err
+			}
+
+			err = tx.Exec(`ALTER TABLE task_log_new RENAME TO task_log;`).Error
+			if err != nil {
+				return err
+			}
+
+			logger.Info("task_log 表已重建，支持自增主键")
+		} else {
+			logger.Info("task_log 表结构正确，无需修复")
+		}
+
+		// 清理状态异常的历史任务日志（status=1 且 result 为空）
+		err = tx.Exec(`
+			UPDATE task_log 
+			SET status = 0, 
+			    result = '任务异常终止（未正常完成）',
+			    end_time = datetime(start_time, '+1 second')
+			WHERE status = 1 
+			AND (result IS NULL OR result = '');
+		`).Error
+		if err != nil {
+			logger.Error("清理异常任务日志失败", err)
+		} else {
+			logger.Info("已清理状态异常的历史任务日志")
+		}
+	}
+
+	logger.Info("已升级到v1.5.3\n")
+
+	return nil
+}
+
+// contains 检查字符串是否包含子串
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
+}
+
+func containsMiddle(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

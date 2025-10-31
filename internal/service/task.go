@@ -127,6 +127,7 @@ func (task Task) Initialize() {
 			break
 		}
 		for _, item := range taskList {
+			logger.Infof("添加任务到调度器#ID-%d#名称-%s#协议-%d#主机数量-%d", item.Id, item.Name, item.Protocol, len(item.Hosts))
 			task.Add(item)
 			taskNum++
 		}
@@ -284,12 +285,17 @@ func (h *HTTPHandler) Run(taskModel models.Task, taskUniqueId int64) (result str
 type RPCHandler struct{}
 
 func (h *RPCHandler) Run(taskModel models.Task, taskUniqueId int64) (result string, err error) {
+	logger.Infof("RPC任务开始执行#任务ID-%d#主机数量-%d", taskModel.Id, len(taskModel.Hosts))
+	if len(taskModel.Hosts) == 0 {
+		return "", fmt.Errorf("任务未关联任何主机")
+	}
 	taskRequest := new(pb.TaskRequest)
 	taskRequest.Timeout = int32(taskModel.Timeout)
 	taskRequest.Command = taskModel.Command
 	taskRequest.Id = taskUniqueId
 	resultChan := make(chan TaskResult, len(taskModel.Hosts))
 	for _, taskHost := range taskModel.Hosts {
+		logger.Infof("准备执行RPC调用#主机-%s:%d#命令-%s", taskHost.Name, taskHost.Port, taskModel.Command)
 		go func(th models.TaskHostDetail) {
 			output, err := rpcClient.Exec(th.Name, th.Port, taskRequest)
 			errorMessage := ""
@@ -303,6 +309,7 @@ func (h *RPCHandler) Run(taskModel models.Task, taskUniqueId int64) (result stri
 			outputMessage := fmt.Sprintf("主机: [%s-%s:%d]\n%s%s",
 				th.Alias, th.Name, th.Port, errorMessage, output,
 			)
+			logger.Infof("RPC调用完成#主机-%s:%d#输出长度-%d#错误-%v", th.Name, th.Port, len(output), err)
 			resultChan <- TaskResult{Err: err, Result: outputMessage}
 		}(taskHost)
 	}
@@ -362,11 +369,13 @@ func updateTaskLog(taskLogId int64, taskResult TaskResult) (int64, error) {
 }
 
 func createJob(taskModel models.Task) cron.FuncJob {
+	logger.Infof("创建任务Job#ID-%d#名称-%s#主机数量-%d", taskModel.Id, taskModel.Name, len(taskModel.Hosts))
 	handler := createHandler(taskModel)
 	if handler == nil {
 		return nil
 	}
 	taskFunc := func() {
+		logger.Infof("任务闭包执行#ID-%d#名称-%s#主机数量-%d", taskModel.Id, taskModel.Name, len(taskModel.Hosts))
 		taskCount.Add()
 		defer taskCount.Done()
 
@@ -407,6 +416,7 @@ func createHandler(taskModel models.Task) Handler {
 // 任务前置操作
 func beforeExecJob(taskModel models.Task) (taskLogId int64) {
 	if taskModel.Multi == 0 && runInstance.has(taskModel.Id) {
+		logger.Infof("任务已在运行中，取消本次执行#ID-%d", taskModel.Id)
 		createTaskLog(taskModel, models.Cancel)
 		return
 	}
@@ -415,6 +425,7 @@ func beforeExecJob(taskModel models.Task) (taskLogId int64) {
 		logger.Error("任务开始执行#写入任务日志失败-", err)
 		return
 	}
+	logger.Infof("任务前置操作完成#ID-%d#taskLogId-%d", taskModel.Id, taskLogId)
 	logger.Debugf("任务命令-%s", taskModel.Command)
 
 	return taskLogId

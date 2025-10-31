@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	AppVersion           = "1.5.1"
+	AppVersion           = "1.5.3"
 	BuildDate, GitCommit string
 )
 
@@ -114,6 +114,11 @@ func initModule() {
 
 	// 版本升级
 	upgradeIfNeed()
+
+	// 修复缺失的配置记录
+	if err := models.RepairSettings(); err != nil {
+		logger.Error("修复配置记录失败", err)
+	}
 
 	// 初始化定时任务
 	service.ServiceTask.Initialize()

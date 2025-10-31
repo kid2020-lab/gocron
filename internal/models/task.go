@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gocronx-team/gocron/internal/modules/logger"
 	"gorm.io/gorm"
 )
 
@@ -157,6 +158,7 @@ func (task *Task) setHostsForTasks(tasks []Task) ([]Task, error) {
 			return nil, err
 		}
 		tasks[i].Hosts = taskHostDetails
+		logger.Debugf("任务ID-%d 关联主机数量-%d", value.Id, len(taskHostDetails))
 	}
 
 	return tasks, err

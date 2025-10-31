@@ -2,6 +2,8 @@ package models
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -84,6 +86,7 @@ func CreateDb() *gorm.DB {
 	case "postgres":
 		dialector = postgres.Open(dsn)
 	case "sqlite":
+		ensureSqliteDir(dsn)
 		dialector = sqlite.Open(dsn)
 	default:
 		glogger.Fatal("不支持的数据库类型", nil)
@@ -143,6 +146,7 @@ func CreateTmpDb(setting *setting.Setting) (*gorm.DB, error) {
 	case "postgres":
 		dialector = postgres.Open(dsn)
 	case "sqlite":
+		ensureSqliteDir(dsn)
 		dialector = sqlite.Open(dsn)
 	default:
 		return nil, fmt.Errorf("不支持的数据库类型: %s", engine)
@@ -192,6 +196,16 @@ func keepDbAlived(db *gorm.DB) {
 			glogger.Infof("database ping failed: %s", err)
 		} else {
 			glogger.Infof("database ping: ok")
+		}
+	}
+}
+
+// 确保 SQLite 数据库文件所在目录存在
+func ensureSqliteDir(dbPath string) {
+	dir := filepath.Dir(dbPath)
+	if dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			glogger.Fatal("创建SQLite数据库目录失败", err)
 		}
 	}
 }

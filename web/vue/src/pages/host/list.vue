@@ -103,6 +103,13 @@ export default {
   created () {
     this.search()
   },
+  watch: {
+    '$route'(to, from) {
+      if (to.path === '/host' && (from.path === '/host/create' || from.path.startsWith('/host/edit/'))) {
+        this.search()
+      }
+    }
+  },
   methods: {
     changePage (page) {
       this.searchParams.page = page
@@ -132,6 +139,10 @@ export default {
       }).catch(() => {})
     },
     ping (item) {
+      if (!item.id || item.id <= 0) {
+        this.$message.error(this.t('message.dataNotFound'))
+        return
+      }
       hostService.ping(item.id, () => {
         this.$message.success(this.t('message.connectionSuccess'))
       })

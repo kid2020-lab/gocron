@@ -62,58 +62,36 @@ const (
 
 // 初始化基本字段 邮件、slack等
 func (setting *Setting) InitBasicField() {
-	setting.Code = SlackCode
-	setting.Key = SlackUrlKey
-	setting.Value = ""
-	Db.Create(setting)
-	setting.Id = 0
+	// 定义所有需要初始化的配置
+	configs := []struct {
+		Code  string
+		Key   string
+		Value string
+	}{
+		{SlackCode, SlackUrlKey, ""},
+		{SlackCode, SlackTemplateKey, slackTemplate},
+		{MailCode, MailServerKey, ""},
+		{MailCode, MailTemplateKey, emailTemplate},
+		{WebhookCode, WebhookUrlKey, ""},
+		{WebhookCode, WebhookTemplateKey, webhookTemplate},
+		{SystemCode, LogRetentionDaysKey, "0"},
+		{SystemCode, LogCleanupTimeKey, "03:00"},
+		{SystemCode, LogFileSizeLimitKey, "0"},
+	}
 
-	setting.Code = SlackCode
-	setting.Key = SlackTemplateKey
-	setting.Value = slackTemplate
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = MailCode
-	setting.Key = MailServerKey
-	setting.Value = ""
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = MailCode
-	setting.Key = MailTemplateKey
-	setting.Value = emailTemplate
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = WebhookCode
-	setting.Key = WebhookTemplateKey
-	setting.Value = webhookTemplate
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = WebhookCode
-	setting.Key = WebhookUrlKey
-	setting.Value = ""
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = SystemCode
-	setting.Key = LogRetentionDaysKey
-	setting.Value = "0"
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = SystemCode
-	setting.Key = LogCleanupTimeKey
-	setting.Value = "03:00"
-	Db.Create(setting)
-	setting.Id = 0
-
-	setting.Code = SystemCode
-	setting.Key = LogFileSizeLimitKey
-	setting.Value = "0"
-	Db.Create(setting)
+	// 检查并创建不存在的配置
+	for _, cfg := range configs {
+		var count int64
+		Db.Model(&Setting{}).Where("code = ? AND key = ?", cfg.Code, cfg.Key).Count(&count)
+		if count == 0 {
+			s := &Setting{
+				Code:  cfg.Code,
+				Key:   cfg.Key,
+				Value: cfg.Value,
+			}
+			Db.Create(s)
+		}
+	}
 }
 
 // region slack配置

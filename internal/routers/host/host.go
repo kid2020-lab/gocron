@@ -112,14 +112,14 @@ func Store(c *gin.Context) {
 	hostModel.Remark = strings.TrimSpace(form.Remark)
 	isCreate := false
 	oldHostModel := new(models.Host)
-	err = oldHostModel.Find(int(id))
-	if err != nil {
-		result := json.CommonFailure("主机不存在")
-		c.String(http.StatusOK, result)
-		return
-	}
 
 	if id > 0 {
+		err = oldHostModel.Find(int(id))
+		if err != nil {
+			result := json.CommonFailure("主机不存在")
+			c.String(http.StatusOK, result)
+			return
+		}
 		_, err = hostModel.UpdateBean(id)
 	} else {
 		isCreate = true
