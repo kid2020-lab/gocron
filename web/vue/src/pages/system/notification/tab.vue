@@ -46,6 +46,15 @@ export default {
       if (newVal && this.$route.path !== `/system/notification/${newVal}`) {
         this.$router.push(`/system/notification/${newVal}`)
       }
+    },
+    '$route.path': {
+      handler(newPath) {
+        const segments = newPath.split('/')
+        if (segments.length === 4 && segments[2] === 'notification') {
+          this.activeName = segments[3]
+        }
+      },
+      immediate: false
     }
   }
 }
