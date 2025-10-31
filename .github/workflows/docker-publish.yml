@@ -48,7 +48,6 @@ jobs:
           --file ./Dockerfile.${{ matrix.component }} \
           --tag ${{ secrets.DOCKER_USERNAME }}/${{ matrix.component }}:${{ steps.version.outputs.version }} \
           --tag ${{ secrets.DOCKER_USERNAME }}/${{ matrix.component }}:latest \
-          --cache-from type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ matrix.component }}:buildcache \
-          --cache-to type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ matrix.component }}:buildcache,mode=max \
+          --no-cache \
           --push \
           .
