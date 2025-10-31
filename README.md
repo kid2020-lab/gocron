@@ -16,6 +16,7 @@
 * 多用户与权限控制
 * 双因素认证(2FA)
 * 国际化支持（中文/英文界面切换）
+* 多数据库支持（MySQL/PostgreSQL/SQLite）
 * 任务类型
     * Shell任务 - 在任务节点上执行shell命令
     * HTTP任务 - 访问指定的URL地址
@@ -232,6 +233,7 @@ refactor(api): 重构任务调度逻辑
 * 现代化的Vue3+Vite前端架构
 * 后端Web框架重构（升级到现代化的[gin](https://github.com/gin-gonic/gin)框架）
 * 数据库迁移工具重构（基于[gorm](https://github.com/go-gorm/gorm)的自动迁移系统）
+* 多数据库支持（特别增加了SQLite支持，方便轻量级部署）
 * 更好的用户体验和界面设计
 
 感谢原项目作者的付出，也希望大家多给项目点star、多提issue，鼓励项目的发展，让我们一起完善这个项目！

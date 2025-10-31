@@ -14,6 +14,7 @@ A lightweight distributed scheduled task management system developed in Go, desi
 * Multi-user and permission control
 * Two-Factor Authentication (2FA)
 * Internationalization support (Chinese/English interface switching)
+* Multi-database support (MySQL/PostgreSQL/SQLite)
 * Task types
     * Shell tasks - Execute shell commands on task nodes
     * HTTP tasks - Access specified URLs
@@ -228,9 +229,10 @@ This project is developed and refactored based on [gocron](https://github.com/ou
 * Complete internationalization support (Chinese/English switching)
 * Two-Factor Authentication (2FA) security features
 * Automatic log cleanup system
-* Modern Vue3 frontend architecture
+* Modern Vue3+Vite frontend architecture
 * Backend web framework refactoring (upgraded to modern [gin](https://github.com/gin-gonic/gin) framework)
 * Database migration tool refactoring ([gorm](https://github.com/go-gorm/gorm)-based automatic migration system)
+* Multi-database support (especially added SQLite support for lightweight deployment)
 * Better user experience and interface design
 
 Thanks to the original project author for their contribution. I also hope everyone will give the project more stars and submit more issues to encourage the project's development. Let's improve this project together!
