@@ -28,7 +28,8 @@ RUN go install github.com/rakyll/statik@latest
 RUN go generate ./...
 
 # Build without CGO (SQLite not supported in Docker, use MySQL/PostgreSQL)
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o gocron ./cmd/gocron
+# Use -p=1 to reduce memory usage during compilation
+RUN CGO_ENABLED=0 go build -p=1 -ldflags="-s -w" -trimpath -o gocron ./cmd/gocron
 
 FROM alpine:latest
 
