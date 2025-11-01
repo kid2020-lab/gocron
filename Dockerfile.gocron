@@ -19,7 +19,7 @@ RUN go mod download
 
 COPY . .
 # Copy frontend build files to public directory
-COPY --from=frontend /app/web/vue/dist/* ./web/public/
+COPY --from=frontend /app/web/vue/dist ./web/public
 
 # Install statik
 RUN go install github.com/rakyll/statik@latest
