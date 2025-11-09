@@ -54,10 +54,10 @@ const (
 )
 
 const (
-	SystemCode           = "system"
-	LogRetentionDaysKey  = "log_retention_days"
-	LogCleanupTimeKey    = "log_cleanup_time"
-	LogFileSizeLimitKey  = "log_file_size_limit"
+	SystemCode          = "system"
+	LogRetentionDaysKey = "log_retention_days"
+	LogCleanupTimeKey   = "log_cleanup_time"
+	LogFileSizeLimitKey = "log_file_size_limit"
 )
 
 // 初始化基本字段 邮件、slack等
@@ -368,4 +368,5 @@ func (setting *Setting) UpdateLogFileSizeLimit(size int) error {
 	result := Db.Model(&Setting{}).Where("code = ? AND key = ?", SystemCode, LogFileSizeLimitKey).Update("value", strconv.Itoa(size))
 	return result.Error
 }
+
 // endregion

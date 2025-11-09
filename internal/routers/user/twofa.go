@@ -19,7 +19,7 @@ func Setup2FA(c *gin.Context) {
 	uid := Uid(c)
 	username := Username(c)
 	json := utils.JsonResponse{}
-	
+
 	userModel := new(models.User)
 	err := userModel.Find(uid)
 	if err != nil || userModel.Id == 0 {

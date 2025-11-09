@@ -54,7 +54,6 @@ func Register(r *gin.Engine) {
 		})
 	}
 
-
 	// 用户
 	userGroup := api.Group("/user")
 	{
@@ -200,8 +199,6 @@ func RegisterMiddleware(r *gin.Engine) {
 }
 
 // region 自定义中间件
-
-
 
 /** 检测应用是否已安装 **/
 func checkAppInstall(c *gin.Context) {

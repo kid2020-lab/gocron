@@ -36,7 +36,7 @@ func UpdateSlack(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	settingModel := new(models.Setting)
 	err := settingModel.UpdateSlack(form.Url, form.Template)
 	result := utils.JsonResponseByErr(err)
@@ -52,7 +52,7 @@ func CreateSlackChannel(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	settingModel := new(models.Setting)
 	var result string
 	if settingModel.IsChannelExist(form.Channel) {
@@ -130,10 +130,10 @@ func UpdateMail(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	// 从表单中提取template，单独保存
 	template := strings.TrimSpace(form.Template)
-	
+
 	// 将服务器配置序列化为JSON（不包含template）
 	serverConfig := struct {
 		Host     string `json:"host"`
@@ -147,7 +147,7 @@ func UpdateMail(c *gin.Context) {
 		Password: form.Password,
 	}
 	jsonByte, _ := json.Marshal(serverConfig)
-	
+
 	settingModel := new(models.Setting)
 	err := settingModel.UpdateMail(string(jsonByte), template)
 	result := utils.JsonResponseByErr(err)
@@ -163,7 +163,7 @@ func CreateMailUser(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	settingModel := new(models.Setting)
 	_, err := settingModel.CreateMailUser(form.Username, form.Email)
 	result := utils.JsonResponseByErr(err)
@@ -201,7 +201,7 @@ func UpdateWebHook(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	settingModel := new(models.Setting)
 	err := settingModel.UpdateWebHook(form.Url, form.Template)
 	result := utils.JsonResponseByErr(err)
@@ -218,8 +218,8 @@ func GetLogRetentionDays(c *gin.Context) {
 	fileSizeLimit := settingModel.GetLogFileSizeLimit()
 	jsonResp := utils.JsonResponse{}
 	result := jsonResp.Success("", map[string]interface{}{
-		"days":           days,
-		"cleanup_time":   cleanupTime,
+		"days":            days,
+		"cleanup_time":    cleanupTime,
 		"file_size_limit": fileSizeLimit,
 	})
 	c.String(http.StatusOK, result)
@@ -237,7 +237,7 @@ func UpdateLogRetentionDays(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	settingModel := new(models.Setting)
 	err := settingModel.UpdateLogRetentionDays(form.Days)
 	if err != nil {
@@ -262,4 +262,5 @@ func UpdateLogRetentionDays(c *gin.Context) {
 	result := utils.JsonResponseByErr(nil)
 	c.String(http.StatusOK, result)
 }
+
 // endregion

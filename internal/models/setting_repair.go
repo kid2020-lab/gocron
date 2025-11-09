@@ -16,15 +16,15 @@ func RepairSettings() error {
 		// Slack 配置
 		{SlackCode, SlackUrlKey, ""},
 		{SlackCode, SlackTemplateKey, slackTemplate},
-		
+
 		// 邮件配置
 		{MailCode, MailServerKey, ""},
 		{MailCode, MailTemplateKey, emailTemplate},
-		
+
 		// Webhook 配置
 		{WebhookCode, WebhookUrlKey, ""},
 		{WebhookCode, WebhookTemplateKey, webhookTemplate},
-		
+
 		// 系统配置
 		{SystemCode, LogRetentionDaysKey, "0"},
 		{SystemCode, LogCleanupTimeKey, "03:00"},

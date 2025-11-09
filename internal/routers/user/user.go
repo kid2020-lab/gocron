@@ -23,11 +23,11 @@ const tokenDuration = 4 * time.Hour
 // UserForm 用户表单
 type UserForm struct {
 	Id              int           `form:"id" json:"id"`
-	Name            string        `form:"name" json:"name" binding:"required,max=32"` // 用户名
-	Password        string        `form:"password" json:"password"` // 密码
-	ConfirmPassword string        `form:"confirm_password" json:"confirm_password"` // 确认密码
+	Name            string        `form:"name" json:"name" binding:"required,max=32"`         // 用户名
+	Password        string        `form:"password" json:"password"`                           // 密码
+	ConfirmPassword string        `form:"confirm_password" json:"confirm_password"`           // 确认密码
 	Email           string        `form:"email" json:"email" binding:"required,email,max=50"` // 邮箱
-	IsAdmin         int8          `form:"is_admin" json:"is_admin"` // 是否是管理员 1:管理员 0:普通用户
+	IsAdmin         int8          `form:"is_admin" json:"is_admin"`                           // 是否是管理员 1:管理员 0:普通用户
 	Status          models.Status `form:"status" json:"status"`
 }
 
@@ -100,7 +100,7 @@ func Store(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	form.Name = strings.TrimSpace(form.Name)
 	form.Email = strings.TrimSpace(form.Email)
 	form.Password = strings.TrimSpace(form.Password)
@@ -232,7 +232,7 @@ func UpdatePassword(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	json := utils.JsonResponse{}
 	var result string
 	if form.NewPassword != form.ConfirmNewPassword {
@@ -259,7 +259,7 @@ func UpdateMyPassword(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	json := utils.JsonResponse{}
 	var result string
 	if form.NewPassword != form.ConfirmNewPassword {
@@ -411,7 +411,6 @@ func generateToken(user *models.User) (string, error) {
 
 	return token.SignedString([]byte(app.Setting.AuthSecret))
 }
-
 
 // 还原jwt
 func RestoreToken(c *gin.Context) error {

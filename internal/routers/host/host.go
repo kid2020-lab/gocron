@@ -80,8 +80,6 @@ type HostForm struct {
 	Remark string `form:"remark" json:"remark"`
 }
 
-
-
 // Store 保存、修改主机信息
 func Store(c *gin.Context) {
 	var form HostForm
@@ -91,7 +89,7 @@ func Store(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	json := utils.JsonResponse{}
 	hostModel := new(models.Host)
 	id := form.Id

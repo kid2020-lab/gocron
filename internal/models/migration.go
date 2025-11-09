@@ -25,12 +25,12 @@ func (migration *Migration) Install(dbName string) error {
 			return err
 		}
 	}
-	
+
 	// SQLite特殊处理：修复task_log表的自增主键
 	if Db.Dialector.Name() == "sqlite" {
 		migration.fixSQLiteAutoIncrement()
 	}
-	
+
 	setting.InitBasicField()
 
 	return nil
@@ -456,7 +456,7 @@ func containsMiddle(s, substr string) bool {
 // 修复SQLite表的自增主键问题
 func (m *Migration) fixSQLiteAutoIncrement() {
 	logger.Info("检查SQLite表结构...")
-	
+
 	// 修复task_log表
 	var taskLogSQL string
 	Db.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='task_log'").Scan(&taskLogSQL)
@@ -483,7 +483,7 @@ func (m *Migration) fixSQLiteAutoIncrement() {
 		Db.Exec(`ALTER TABLE task_log_new RENAME TO task_log;`)
 		logger.Info("修复task_log表完成")
 	}
-	
+
 	// 修复host表
 	var hostSQL string
 	Db.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='host'").Scan(&hostSQL)

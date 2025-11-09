@@ -87,7 +87,7 @@ func (taskLog *TaskLog) List(params CommonMap) ([]TaskLog, error) {
 	query := Db.Order("id DESC")
 	taskLog.parseWhere(query, params)
 	err := query.Limit(taskLog.PageSize).Offset(taskLog.pageLimitOffset()).Find(&list).Error
-	
+
 	if len(list) > 0 {
 		for i, item := range list {
 			endTime := time.Time(item.EndTime)

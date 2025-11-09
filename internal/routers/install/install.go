@@ -8,12 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
-	"github.com/lib/pq"
 	"github.com/gocronx-team/gocron/internal/models"
 	"github.com/gocronx-team/gocron/internal/modules/app"
 	"github.com/gocronx-team/gocron/internal/modules/setting"
 	"github.com/gocronx-team/gocron/internal/modules/utils"
 	"github.com/gocronx-team/gocron/internal/service"
+	"github.com/lib/pq"
 )
 
 // 系统安装
@@ -32,8 +32,6 @@ type InstallForm struct {
 	AdminEmail           string `form:"admin_email" binding:"required,email,max=50"`
 }
 
-
-
 // 安装
 func Store(c *gin.Context) {
 	var form InstallForm
@@ -43,7 +41,7 @@ func Store(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
-	
+
 	json := utils.JsonResponse{}
 	var result string
 	if app.Installed {
@@ -172,12 +170,12 @@ func testDbConnection(form InstallForm) error {
 	s.Db.Password = form.DbPassword
 	s.Db.Database = form.DbName
 	s.Db.Charset = "utf8"
-	
+
 	// SQLite 不需要测试连接，会自动创建文件
 	if s.Db.Engine == "sqlite" {
 		return nil
 	}
-	
+
 	db, err := models.CreateTmpDb(&s)
 	if err != nil {
 		return err
