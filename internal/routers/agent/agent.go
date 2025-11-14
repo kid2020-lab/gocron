@@ -98,13 +98,23 @@ fi
 
 echo "Installing gocron-node for $OS-$ARCH..."
 
-DOWNLOAD_URL="${GOCRON_SERVER}/api/agent/download?os=${OS}&arch=${ARCH}"
+GITHUB_REPO="gocronx-team/gocron"
+if [ "$OS" = "windows" ]; then
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.zip"
+else
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.tar.gz"
+fi
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 
 echo "Downloading from $DOWNLOAD_URL..."
-curl -fsSL "$DOWNLOAD_URL" -o gocron-node.tar.gz
-tar -xzf gocron-node.tar.gz
+if [ "$OS" = "windows" ]; then
+    curl -fsSL "$DOWNLOAD_URL" -o gocron-node.zip
+    unzip -q gocron-node.zip
+else
+    curl -fsSL "$DOWNLOAD_URL" -o gocron-node.tar.gz
+    tar -xzf gocron-node.tar.gz
+fi
 
 sudo mkdir -p "$INSTALL_DIR"
 sudo cp -r gocron-node*/* "$INSTALL_DIR/"
@@ -232,11 +242,12 @@ $TOKEN = "` + token + `"
 $GOCRON_SERVER = "` + getServerURL(c) + `"
 $INSTALL_DIR = "C:\Program Files\gocron-node"
 $SERVICE_NAME = "gocron-node"
+$GITHUB_REPO = "gocronx-team/gocron"
 
 Write-Host "Installing gocron-node for Windows..."
 
 $ARCH = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "386" }
-$DOWNLOAD_URL = "${GOCRON_SERVER}/api/agent/download?os=windows&arch=${ARCH}"
+$DOWNLOAD_URL = "https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-windows-${ARCH}.zip"
 
 $TMP_DIR = [System.IO.Path]::GetTempPath() + [System.Guid]::NewGuid().ToString()
 New-Item -ItemType Directory -Path $TMP_DIR | Out-Null
