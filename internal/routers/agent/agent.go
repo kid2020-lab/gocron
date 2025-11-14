@@ -376,17 +376,25 @@ func Download(c *gin.Context) {
 		return
 	}
 
+	// 根据操作系统选择文件扩展名
+	ext := ".tar.gz"
+	filename := fmt.Sprintf("gocron-node-%s-%s.tar.gz", os, arch)
+	if os == "windows" {
+		ext = ".zip"
+		filename = fmt.Sprintf("gocron-node-%s-%s.zip", os, arch)
+	}
+
 	// 查找匹配的包文件
-	packagePattern := fmt.Sprintf("./gocron-node-package/gocron-node-*-%s-%s.tar.gz", os, arch)
+	packagePattern := fmt.Sprintf("./gocron-node-package/gocron-node-*-%s-%s%s", os, arch, ext)
 	matches, err := filepath.Glob(packagePattern)
 	if err != nil || len(matches) == 0 {
 		// 开发环境提示
-		logger.Warnf("Package not found for %s-%s, run 'make package' to build all platforms", os, arch)
+		logger.Warnf("Package not found for %s-%s, run 'make package-all' to build all platforms", os, arch)
 		c.String(http.StatusNotFound, fmt.Sprintf("Package not found for %s-%s. Please run 'make package-all' to build packages for all platforms.", os, arch))
 		return
 	}
 
-	c.FileAttachment(matches[0], fmt.Sprintf("gocron-node-%s-%s.tar.gz", os, arch))
+	c.FileAttachment(matches[0], filename)
 }
 
 func generateRandomToken() string {
