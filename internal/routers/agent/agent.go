@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -104,16 +106,42 @@ fi
 
 echo "Installing gocron-node for $OS-$ARCH..."
 
-GITHUB_REPO="gocronx-team/gocron"
-if [ "$OS" = "windows" ]; then
-    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.zip"
-else
-    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.tar.gz"
-fi
+# 检测本地服务器是否有安装包
+LOCAL_DOWNLOAD_URL="${GOCRON_SERVER}/api/agent/download?os=${OS}&arch=${ARCH}"
+echo "Checking local server for installation package..."
+
+# 使用 HEAD 请求检测，-w %{http_code} 获取状态码，-o /dev/null 不输出内容
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LOCAL_DOWNLOAD_URL")
+
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 
-echo "Downloading from $DOWNLOAD_URL..."
+if [ "$HTTP_CODE" = "200" ]; then
+    # 本地有安装包，直接下载
+    echo "✓ Local package found, downloading from local server..."
+    DOWNLOAD_URL="$LOCAL_DOWNLOAD_URL"
+elif [ "$HTTP_CODE" = "302" ]; then
+    # 本地没有，需要从 GitHub 下载
+    echo "✗ Local package not found on server"
+    echo "→ Downloading from GitHub (this may take a while or require network access)..."
+    GITHUB_REPO="gocronx-team/gocron"
+    if [ "$OS" = "windows" ]; then
+        DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.zip"
+    else
+        DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.tar.gz"
+    fi
+else
+    echo "✗ Failed to check server status (HTTP $HTTP_CODE)"
+    echo "→ Trying GitHub as fallback..."
+    GITHUB_REPO="gocronx-team/gocron"
+    if [ "$OS" = "windows" ]; then
+        DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.zip"
+    else
+        DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/gocron-node-${OS}-${ARCH}.tar.gz"
+    fi
+fi
+
+echo "Downloading from: $DOWNLOAD_URL"
 if [ "$OS" = "windows" ]; then
     curl -fsSL "$DOWNLOAD_URL" -o gocron-node.zip
     unzip -q gocron-node.zip
@@ -413,7 +441,7 @@ func Register(c *gin.Context) {
 	c.String(http.StatusOK, json.Success("Registration successful", nil))
 }
 
-// Download 重定向到 GitHub Release 下载
+// Download 优先从本地 gocron-node-package 目录下载，如果不存在则重定向到 GitHub Release
 func Download(c *gin.Context) {
 	osName := c.Query("os")
 	arch := c.Query("arch")
@@ -429,12 +457,34 @@ func Download(c *gin.Context) {
 		ext = ".zip"
 	}
 
-	// 构建 GitHub Release 下载 URL
-	// 格式: https://github.com/gocronx-team/gocron/releases/latest/download/gocron-node-{version}-{os}-{arch}.{ext}
 	filename := fmt.Sprintf("gocron-node-%s-%s%s", osName, arch, ext)
-	githubURL := fmt.Sprintf("https://github.com/gocronx-team/gocron/releases/latest/download/%s", filename)
 	
-	logger.Infof("Redirecting to GitHub Release: %s", githubURL)
+	// 获取可执行文件所在目录
+	execPath, err := os.Executable()
+	if err != nil {
+		logger.Errorf("获取可执行文件路径失败: %v", err)
+		// 降级到 GitHub
+		githubURL := fmt.Sprintf("https://github.com/gocronx-team/gocron/releases/latest/download/%s", filename)
+		logger.Warnf("✗ 无法获取可执行文件路径，重定向到 GitHub: %s", githubURL)
+		c.Redirect(http.StatusFound, githubURL)
+		return
+	}
+	
+	execDir := filepath.Dir(execPath)
+	
+	// 优先检查本地 gocron-node-package 目录（相对于可执行文件所在目录）
+	localPath := filepath.Join(execDir, "gocron-node-package", filename)
+	
+	// 检查文件是否存在
+	if _, err := os.Stat(localPath); err == nil {
+		logger.Infof("✓ 本地安装包存在，提供文件: %s", localPath)
+		c.File(localPath)
+		return
+	}
+
+	// 本地文件不存在，重定向到 GitHub Release
+	githubURL := fmt.Sprintf("https://github.com/gocronx-team/gocron/releases/latest/download/%s", filename)
+	logger.Warnf("✗ 本地安装包不存在 (%s)，重定向到 GitHub: %s", localPath, githubURL)
 	c.Redirect(http.StatusFound, githubURL)
 }
 

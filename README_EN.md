@@ -1,324 +1,70 @@
-# gocron - Distributed scheduled task management system
+# gocron - Distributed Scheduled Task Management System
+
 [![Release](https://img.shields.io/github/release/gocronx-team/gocron.svg?label=Release)](https://github.com/gocronx-team/gocron/releases) [![Downloads](https://img.shields.io/github/downloads/gocronx-team/gocron/total.svg)](https://github.com/gocronx-team/gocron/releases) [![License](https://img.shields.io/github/license/gocronx-team/gocron.svg)](https://github.com/gocronx-team/gocron/blob/master/LICENSE)
+
 English | [简体中文](README.md)
 
 A lightweight distributed scheduled task management system developed in Go, designed to replace Linux-crontab.
 
-## Features
+## 📖 Documentation
 
-* Web-based task management interface
-* Crontab time expressions with second precision
-* Task retry on failure
-* Task timeout and forced termination
-* Task dependency configuration
-* Multi-user and permission control
-* Two-Factor Authentication (2FA)
-* Agent Auto-Registration (Linux/macOS/Windows supported)
-* Internationalization support (Chinese/English interface switching)
-* Multi-database support (MySQL/PostgreSQL/SQLite)
-* Task types
-    * Shell tasks - Execute shell commands on task nodes
-    * HTTP tasks - Access specified URLs
-* Task execution log viewing
-* Automatic log cleanup (scheduled cleanup of database logs and log files)
-* Task execution notifications (Email, Slack, Webhook)
+Full documentation is available at: **[document](https://gocron-docs.pages.dev/en/)**
 
-## Screenshots
+- 🚀 [Quick Start](https://gocron-docs.pages.dev/en/guide/quick-start) - Installation and deployment guide
+- 🤖 [Agent Auto-Registration](https://gocron-docs.pages.dev/en/guide/agent-registration) - One-click task node deployment
+- ⚙️ [Configuration](https://gocron-docs.pages.dev/en/guide/configuration) - Detailed configuration guide
+- 🔌 [API Documentation](https://gocron-docs.pages.dev/en/guide/api) - API reference
 
-Here are some partial screenshots of the system:
+## ✨ Features
+
+* **Web Interface**: Intuitive task management interface
+* **Second-level Precision**: Supports Crontab expressions with second precision
+* **Distributed Architecture**: Master-Worker architecture, high availability
+* **Task Retry**: Configurable retry policies for failed tasks
+* **Task Dependency**: Supports task dependency configuration
+* **Access Control**: Comprehensive user and permission management
+* **2FA Security**: Two-Factor Authentication support
+* **Agent Auto-Registration**: One-click installation for Linux/macOS/Windows
+* **Multi-Database**: MySQL / PostgreSQL / SQLite support
+* **Log Management**: Complete execution logs with auto-cleanup
+* **Notifications**: Email, Slack, Webhook support
+
+## 🚀 Quick Start (Docker)
+
+The easiest way to deploy is using Docker Compose:
+
+```bash
+# 1. Clone the project
+git clone https://github.com/gocronx-team/gocron.git
+cd gocron
+
+# 2. Start services
+docker-compose up -d
+
+# 3. Access Web Interface
+# http://localhost:5920
+# Default credentials: admin / admin123
+```
+
+For more deployment methods (Binary, Development), please refer to the [Installation Guide](https://gocron-docs.pages.dev/en/guide/quick-start).
+
+## 📸 Screenshots
 
 ![Scheduled Tasks](assets/screenshot/scheduler_en.png)
 
 ![Agent Auto-Registration](assets/screenshot/agent_en.png)
 
-![Task Management](assets/screenshot/task_en.png)
+## 🤝 Contributing
 
-![System Notifications](assets/screenshot/notification_en.png)
+We warmly welcome community contributions!
 
+- 🐛 **Report Bugs**: Please submit via GitHub Issues
+- 💡 **Submit Code**: Please follow the [Contributing Guide](https://gocron-docs.pages.dev/en/guide/contributing) to submit PRs
 
+## 📄 License
 
-## Requirements
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-* Go 1.23+
-* Database: MySQL / PostgreSQL / SQLite (see notes below)
-* Node.js 20+ (for frontend development)
+## Star History
 
-## Database Support
-
-| Deployment Method | MySQL | PostgreSQL | SQLite |
-|-------------------|-------|------------|--------|
-| Docker Deployment | ✅ Supported | ✅ Supported | ❌ Not Supported |
-| Binary Deployment | ✅ Supported | ✅ Supported | ✅ Supported |
-| Development Environment | ✅ Supported | ✅ Supported | ✅ Supported |
-
-**Notes**:
-- **Docker Deployment**: Due to cross-platform compilation limitations, Docker images do not support SQLite. Please use MySQL or PostgreSQL
-- **Binary Deployment**:
-  - `make package` compiles for current platform: Supports SQLite (CGO enabled)
-  - `make package-all` cross-platform compilation: Does not support SQLite by default (CGO disabled)
-  - `make package-windows` cross-compile Windows on macOS/Linux:
-    - With MinGW installed (`brew install mingw-w64`): Supports SQLite
-    - Without MinGW: Does not support SQLite
-  - **GitHub Release packages**: All platforms compiled natively with full SQLite support
-- **Production Recommendation**: Use MySQL or PostgreSQL for better performance and distributed deployment support
-
-## Quick Start
-
-### Docker Compose Deployment
-
-Deploy using Docker with local image build:
-
-```bash
-# 1. Clone the project
-git clone https://github.com/gocronx-team/gocron.git
-cd gocron
-
-# 2. Start services (automatically builds image)
-docker-compose up -d
-
-# 3. Access web interface
-# http://localhost:5920
-```
-
-**Notes**:
-- Docker Compose only deploys the gocron management server. Task nodes (gocron-node) need to be installed separately
-- Docker images do not support SQLite. Please use MySQL or PostgreSQL database
-- If you need SQLite, please use binary deployment (see "Production Deployment" section below)
-- Refer to the "Production Deployment" section below for gocron-node startup instructions
-
-### Development Environment
-
-```bash
-# 1. Clone the project
-git clone https://github.com/gocronx-team/gocron.git
-cd gocron
-
-# 2. Install dependencies
-go mod download
-
-# 3. Configure database
-# Edit ~/.gocron/conf/app.ini
-# For MySQL/PostgreSQL: see examples in project root
-# For SQLite: copy app.ini.sqlite.example
-
-# 4. Start backend (with hot reload)
-air
-
-# 5. Start frontend (in another terminal)
-cd web/vue
-yarn install
-yarn run dev
-```
-
-Visit http://localhost:8080
-
-### Binary Deployment (Recommended)
-
-Suitable for production environments, supports all databases (including SQLite):
-
-```bash
-# 1. Build and package
-make package
-
-# 2. Extract the package for your platform
-tar -xzf gocron-package/gocron-*.tar.gz
-tar -xzf gocron-node-package/gocron-node-*.tar.gz
-
-# 3. Start service
-cd gocron-*
-./gocron web
-
-# 4. Start task node (in another terminal)
-cd gocron-node-*
-./gocron-node
-```
-
-Visit http://localhost:5920
-
-## Agent Auto-Registration
-
-gocron supports one-click generation of installation commands through the web interface. Simply execute the command on the target server to automatically install and register the Agent node.
-
-### Usage
-
-1. Go to the "Task Nodes" page in the web interface
-2. Click the "Auto Register" button
-3. Copy the installation command for the corresponding platform
-4. Execute the command on the target server
-
-### Supported Platforms
-
-**Linux / macOS**
-```bash
-curl -fsSL http://your-server:5920/api/agent/install.sh | bash -s -- <token>
-```
-
-**Windows (PowerShell with Administrator privileges)**
-```powershell
-iwr -useb http://your-server:5920/api/agent/install.ps1?token=<token> | iex
-```
-
-### Features
-
-* ✅ One-time token with 3-hour validity period
-* ✅ Token can be reused within validity period, suitable for batch installation
-* ✅ Automatic download, installation, registration, and startup of Agent
-* ✅ Automatic creation of systemd service on Linux
-* ✅ Automatic creation of Windows service on Windows
-* ✅ Secure one-way communication (Agent only accesses gocron during registration)
-
-## Commands
-
-### gocron
-
-```bash
-gocron web              # Start web service
-gocron web -p 8080      # Specify port
-gocron web -e dev       # Development mode
-gocron -v               # Show version
-```
-
-### gocron-node
-
-```bash
-gocron-node             # Start task node
-gocron-node -s :5921    # Specify listening address
-gocron-node -enable-tls # Enable TLS
-```
-
-## Tech Stack
-
-* Backend: Gin + GORM + gRPC
-* Frontend: Vue3 + Element Plus + Vite
-* Scheduler: Cron
-* Database: MySQL / PostgreSQL / SQLite
-
-## Development Tools
-
-### Basic Build
-* `make build` - Build project (gocron + gocron-node)
-* `make run` - Build and run (starts both backend and node)
-* `make test` - Run tests
-* `make clean` - Clean build files
-
-### Multi-Platform Packaging
-* `make package` - Build packages for current platform
-* `make package-linux` - Build packages for Linux (amd64, arm64)
-* `make package-darwin` - Build packages for macOS (amd64, arm64)
-* `make package-windows` - Build packages for Windows (amd64, arm64)
-* `make package-all` - Build packages for all platforms
-
-### Frontend Development
-* `make build-vue` - Build frontend
-* `make install-vue` - Install frontend dependencies (yarn)
-* `make run-vue` - Start frontend dev server (yarn)
-
-### Code Quality
-* `make lint` - Run code linter
-* `make fmt` - Format code
-* `make vet` - Run go vet
-
-### Development Tools
-* `make dev-deps` - Install development dependencies
-* `air` - Backend hot reload
-* `yarn run dev` - Frontend hot reload
-* `make help` - Show all available commands
-
-## Contributing
-
-We warmly welcome community contributions! Whether it's bug fixes, new feature development, documentation improvements, or issue reports, all are valuable support for the project.
-
-### Git Commit Convention
-
-To maintain clear and consistent project history, please follow this commit message format:
-
-**Basic Format**:
-```
-type(scope): subject
-
-body
-
-footer
-```
-
-**Detailed Component Description**:
-- **type**: Commit type (required) - such as feat, fix, docs, etc.
-- **scope**: Affected scope (optional) - such as web, api, auth, etc., in parentheses
-- **subject**: Brief description (required) - one line explaining what this commit does
-- **body**: Detailed description (optional) - explain why this change was made and how it was implemented
-- **footer**: Footer information (optional) - such as closed issue numbers, breaking change notes, etc.
-
-**Real Example**:
-```
-feat(auth): add two-factor authentication
-
-To improve system security, implemented TOTP-based two-factor authentication:
-- Support for Google Authenticator and other auth apps
-- Provide both QR code and manual entry setup methods
-- Complete enable/disable workflow
-
-Closes #123
-```
-
-**Types**:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation update
-- `style`: Code formatting (no functional changes)
-- `refactor`: Code refactoring
-- `test`: Test related
-- `chore`: Build process or auxiliary tool changes
-- `perf`: Performance optimization
-- `ci`: CI/CD related
-
-**Scopes** (optional):
-- `web`: Frontend related
-- `api`: Backend API related
-- `node`: Task node related
-- `auth`: Authentication related
-- `i18n`: Internationalization related
-- `log`: Logging related
-- `db`: Database related
-
-**Examples**:
-```bash
-feat(auth): add two-factor authentication
-fix(web): fix task list pagination display issue
-docs(readme): update installation instructions
-refactor(api): refactor task scheduling logic
-```
-
-### How to Contribute
-
-1. **Fork the project** - Click the Fork button in the top right
-2. **Create a branch** - `git checkout -b feature/your-feature`
-3. **Commit code** - Follow the commit convention above
-4. **Push branch** - `git push origin feature/your-feature`
-5. **Create PR** - Create a Pull Request on GitHub
-
-### Development Guidelines
-
-- Run `make test` before committing to ensure tests pass
-- Add corresponding test cases for new features
-- Update relevant documentation for important features
-- Maintain consistent code style
-- Keep commit messages concise and clear in Chinese or English
-
-We look forward to your participation in making gocron even better! 🚀
-
-## Project Origin & Acknowledgments
-
-This project is developed and refactored based on [gocron](https://github.com/ouqiang/gocron). I really appreciate the design philosophy of the original project, but since the original author is no longer maintaining it, I have done extensive refactoring work on this foundation, including:
-
-* Complete internationalization support (Chinese/English switching)
-* Two-Factor Authentication (2FA) security features
-* Automatic log cleanup system
-* Modern Vue3+Vite frontend architecture
-* Backend web framework refactoring (upgraded to modern [gin](https://github.com/gin-gonic/gin) framework)
-* Database migration tool refactoring ([gorm](https://github.com/go-gorm/gorm)-based automatic migration system)
-* Multi-database support (especially added SQLite support for lightweight deployment)
-* Fixed several critical issues (Shell task stop functionality, orphaned task handling after system restart, etc.)
-* Better user experience and interface design
-
-Thanks to the original project author for their contribution. I also hope everyone will give the project more stars and submit more issues to encourage the project's development. Let's improve this project together!
 [![Star History Chart](https://api.star-history.com/svg?repos=gocronx-team/gocron&type=Date)](https://www.star-history.com/#gocronx-team/gocron&Date)
