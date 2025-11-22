@@ -68,3 +68,29 @@ func (th *TaskHost) HostIdExist(hostId int16) (bool, error) {
 	err := Db.Model(&TaskHost{}).Where("host_id = ?", hostId).Count(&count).Error
 	return count > 0, err
 }
+
+// 批量获取多个任务的主机信息（优化：减少N+1查询）
+func (th *TaskHost) GetHostsByTaskIds(taskIds []int) (map[int][]TaskHostDetail, error) {
+	if len(taskIds) == 0 {
+		return make(map[int][]TaskHostDetail), nil
+	}
+
+	list := make([]TaskHostDetail, 0)
+	err := Db.Table(TablePrefix+"task_host as th").
+		Select("th.task_id", "th.id", "th.host_id", "h.alias", "h.name", "h.port").
+		Joins("LEFT JOIN "+TablePrefix+"host as h ON th.host_id = h.id").
+		Where("th.task_id IN ?", taskIds).
+		Find(&list).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// 按 task_id 分组
+	result := make(map[int][]TaskHostDetail)
+	for _, item := range list {
+		result[item.TaskId] = append(result[item.TaskId], item)
+	}
+
+	return result, nil
+}

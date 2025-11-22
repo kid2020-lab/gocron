@@ -178,19 +178,36 @@ func (task *Task) ActiveListByHostId(hostId int16) ([]Task, error) {
 	return task.setHostsForTasks(list)
 }
 
+// 优化：批量查询任务主机信息，避免N+1查询问题
 func (task *Task) setHostsForTasks(tasks []Task) ([]Task, error) {
-	taskHostModel := new(TaskHost)
-	var err error
-	for i, value := range tasks {
-		taskHostDetails, err := taskHostModel.GetHostIdsByTaskId(value.Id)
-		if err != nil {
-			return nil, err
-		}
-		tasks[i].Hosts = taskHostDetails
-		logger.Debugf("任务ID-%d 关联主机数量-%d", value.Id, len(taskHostDetails))
+	if len(tasks) == 0 {
+		return tasks, nil
 	}
 
-	return tasks, err
+	// 收集所有任务ID
+	taskIds := make([]int, len(tasks))
+	for i, t := range tasks {
+		taskIds[i] = t.Id
+	}
+
+	// 批量查询所有任务的主机信息
+	taskHostModel := new(TaskHost)
+	hostsMap, err := taskHostModel.GetHostsByTaskIds(taskIds)
+	if err != nil {
+		return nil, err
+	}
+
+	// 分配主机信息到对应任务
+	for i := range tasks {
+		if hosts, ok := hostsMap[tasks[i].Id]; ok {
+			tasks[i].Hosts = hosts
+		} else {
+			tasks[i].Hosts = []TaskHostDetail{}
+		}
+		logger.Debugf("任务ID-%d 关联主机数量-%d", tasks[i].Id, len(tasks[i].Hosts))
+	}
+
+	return tasks, nil
 }
 
 // 判断任务名称是否存在

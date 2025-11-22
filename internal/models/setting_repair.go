@@ -50,7 +50,7 @@ func RepairSettings() error {
 				logger.Error("创建配置失败:", err)
 				return err
 			}
-			logger.Info("已创建缺失的配置: code=%s, key=%s", cfg.Code, cfg.Key)
+			logger.Infof("已创建缺失的配置: code=%s, key=%s", cfg.Code, cfg.Key)
 		}
 	}
 

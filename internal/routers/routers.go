@@ -153,7 +153,7 @@ func Register(r *gin.Engine) {
 	r.GET("/", func(c *gin.Context) {
 		file, err := statikFS.Open("/index.html")
 		if err != nil {
-			logger.Error("读取首页文件失败: %s", err)
+			logger.Errorf("读取首页文件失败: %s", err)
 			c.Status(http.StatusInternalServerError)
 			return
 		}
