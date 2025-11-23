@@ -170,11 +170,11 @@ func (setting *Setting) formatMail(list []Setting, mail *Mail) {
 		switch v.Key {
 		case MailServerKey:
 			if v.Value != "" {
-				json.Unmarshal([]byte(v.Value), mail)
+				_ = json.Unmarshal([]byte(v.Value), mail)
 			}
 		case MailUserKey:
 			if v.Value != "" {
-				json.Unmarshal([]byte(v.Value), &mailUser)
+				_ = json.Unmarshal([]byte(v.Value), &mailUser)
 				mailUser.Id = v.Id
 				mail.MailUsers = append(mail.MailUsers, mailUser)
 			}

@@ -210,9 +210,9 @@ func Store(c *gin.Context) {
 		for i, hostIdStr := range hostIdStrList {
 			hostIds[i], _ = strconv.Atoi(hostIdStr)
 		}
-		taskHostModel.Add(id, hostIds)
+		_ = taskHostModel.Add(id, hostIds)
 	} else {
-		taskHostModel.Remove(id)
+		_ = taskHostModel.Remove(id)
 	}
 
 	status, _ := taskModel.GetStatus(id)
@@ -235,7 +235,7 @@ func Remove(c *gin.Context) {
 		result = json.CommonFailure(utils.FailureContent, err)
 	} else {
 		taskHostModel := new(models.TaskHost)
-		taskHostModel.Remove(id)
+		_ = taskHostModel.Remove(id)
 		service.ServiceTask.Remove(id)
 		result = json.Success(utils.SuccessContent, nil)
 	}
@@ -335,7 +335,7 @@ func BatchRemove(c *gin.Context) {
 		_, err := taskModel.Delete(id)
 		if err == nil {
 			successCount++
-			taskHostModel.Remove(id)
+			_ = taskHostModel.Remove(id)
 			service.ServiceTask.Remove(id)
 		}
 	}

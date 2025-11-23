@@ -158,7 +158,7 @@ func Register(r *gin.Engine) {
 		}
 		defer file.Close()
 		c.Header("Content-Type", "text/html")
-		io.Copy(c.Writer, file)
+		_, _ = io.Copy(c.Writer, file)
 	})
 
 	// 静态文件路由 - 必须放在最后
@@ -189,7 +189,7 @@ func Register(r *gin.Engine) {
 			}
 
 			c.Status(http.StatusOK)
-			io.Copy(c.Writer, file)
+			_, _ = io.Copy(c.Writer, file)
 			return
 		}
 

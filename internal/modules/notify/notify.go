@@ -64,13 +64,15 @@ func parseNotifyTemplate(notifyTemplate string, msg Message) string {
 		return fmt.Sprintf("解析通知模板失败: %s", err)
 	}
 	var buf bytes.Buffer
-	tmpl.Execute(&buf, map[string]interface{}{
+	if err := tmpl.Execute(&buf, map[string]interface{}{
 		"TaskId":   msg["task_id"],
 		"TaskName": msg["name"],
 		"Status":   msg["status"],
 		"Result":   msg["output"],
 		"Remark":   msg["remark"],
-	})
+	}); err != nil {
+		return fmt.Sprintf("执行模板失败: %s", err)
+	}
 
 	return buf.String()
 }

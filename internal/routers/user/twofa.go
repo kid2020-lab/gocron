@@ -51,7 +51,12 @@ func Setup2FA(c *gin.Context) {
 
 	// 将图片转为base64
 	var buf bytes.Buffer
-	png.Encode(&buf, img)
+	if err := png.Encode(&buf, img); err != nil {
+		logger.Error("编码二维码失败", err)
+		result := json.CommonFailure(i18n.T(c, "generate_qrcode_failed"))
+		c.String(http.StatusOK, result)
+		return
+	}
 	qrCode := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	result := json.Success(i18n.T(c, "get_success"), map[string]interface{}{

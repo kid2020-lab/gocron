@@ -150,7 +150,7 @@ func (task Task) initLogCleanupTask() {
 	cleanupTime := settingModel.GetLogCleanupTime()
 	// 解析时间 HH:MM
 	var hour, minute int
-	fmt.Sscanf(cleanupTime, "%d:%d", &hour, &minute)
+	_, _ = fmt.Sscanf(cleanupTime, "%d:%d", &hour, &minute)
 	// 生成cron表达式: 秒 分 时 日 月 周
 	cronSpec := fmt.Sprintf("0 %d %d * * *", minute, hour)
 
