@@ -32,12 +32,12 @@ const (
 
 func InitLogger() {
 	logDir := "log"
-	if err := os.MkdirAll(logDir, 0755); err != nil {
+	if err := os.MkdirAll(logDir, 0750); err != nil {
 		panic(err)
 	}
 
 	logFile := filepath.Join(logDir, "cron.log")
-	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
 	}
