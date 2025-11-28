@@ -14,7 +14,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	_ = os.MkdirAll("log", 0o755)
+	_ = os.MkdirAll("log", 0o750)
 	logger.InitLogger()
 	os.Exit(m.Run())
 }
