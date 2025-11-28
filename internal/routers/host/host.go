@@ -161,6 +161,11 @@ func Remove(c *gin.Context) {
 		c.String(http.StatusOK, result)
 		return
 	}
+	if id > math.MaxInt16 || id<math.MinInt16 {
+		result=json.CommonFailure(i18n.T(c,"param_error"),fmt.Errorf("host id %d over int16"),id)
+		c.String(http.StatusOK,result)
+		return
+	}
 	taskHostModel := new(models.TaskHost)
 	exist, err := taskHostModel.HostIdExist(int16(id))
 	if err != nil {
