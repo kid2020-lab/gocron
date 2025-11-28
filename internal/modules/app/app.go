@@ -133,7 +133,7 @@ func createDirIfNotExists(path ...string) {
 		if utils.FileExist(value) {
 			continue
 		}
-		err := os.MkdirAll(value, 0755)
+		err := os.MkdirAll(value, 0750)
 		if err != nil {
 			logger.Fatal(fmt.Sprintf("创建目录失败:%s", err.Error()))
 		}
