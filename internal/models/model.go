@@ -204,7 +204,7 @@ func keepDbAlived(db *gorm.DB) {
 func ensureSqliteDir(dbPath string) {
 	dir := filepath.Dir(dbPath)
 	if dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			glogger.Fatal("创建SQLite数据库目录失败", err)
 		}
 	}
